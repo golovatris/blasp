@@ -139,6 +139,7 @@ return [
         'musicals hit',
         'is hit',
         'blackcocktail',
+        'its not',
     ],
 
 
