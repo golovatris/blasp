@@ -86,6 +86,31 @@ Blasp uses a configuration file (`config/blasp.php`) to manage the list of profa
 php artisan vendor:publish --tag="blasp-config"
 ```
 
+### Custom Configuration
+
+You can specify custom profanity and false positive lists using the `configure()` method:
+
+```php
+use Blaspsoft\Blasp\Facades\Blasp;
+
+$blasp = Blasp::configure(
+    profanities: $your_custom_profanities,
+    falsePositives: $your_custom_false_positives
+)->check($text);
+```
+
+This is particularly useful when you need different profanity rules for specific contexts, such as username validation.
+
+### Cache Management
+
+Blasp uses Laravel's cache system to improve performance. The package automatically caches profanity expressions and their variations. To clear the cache, you can use the provided Artisan command:
+
+```bash
+php artisan blasp:clear
+```
+
+This command will clear all cached Blasp expressions and configurations.
+
 ## License
 
 Blasp is open-sourced software licensed under the [MIT license](LICENSE).
