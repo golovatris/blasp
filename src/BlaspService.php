@@ -70,13 +70,13 @@ class BlaspService extends BlaspExpressionService
      * Initialise the class and parent class.
      *
      */
-    public function __construct(?string $language = null, ?array $profanities = null, ?array $falsePositives = null)
+    public function __construct(?array $profanities = null, ?array $falsePositives = null)
     {
-        parent::__construct($language, $profanities, $falsePositives);
+        parent::__construct($profanities, $falsePositives);
 
         $this->profanityDetector = new ProfanityDetector($this->profanityExpressions, $this->falsePositives);
 
-        $this->stringNormalizer =  Normalize::getLanguageNormalizerInstance($this->chosenLanguage);
+        $this->stringNormalizer =  Normalize::getLanguageNormalizerInstance();
     }
 
     /**

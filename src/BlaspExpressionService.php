@@ -64,20 +64,6 @@ abstract class BlaspExpressionService
     protected array $characterExpressions;
 
     /**
-     * Language the package should use
-     *
-     * @var string|null
-     */
-    protected ?string $chosenLanguage;
-
-    /**
-     * Languages supported by the package
-     *
-     * @var array
-     */
-    protected array $supportedLanguages;
-
-    /**
      * An array of false positive expressions
      *
      * @var array
@@ -87,10 +73,8 @@ abstract class BlaspExpressionService
     /**
      * @throws Exception
      */
-    public function __construct(?string $language = null, ?array $profanities = null, ?array $falsePositives = null)
+    public function __construct(?array $profanities = null, ?array $falsePositives = null)
     {        
-        $this->chosenLanguage = $language;
-
         $this->loadConfiguration($profanities, $falsePositives);
 
         $this->separatorExpression = $this->generateSeparatorExpression();
@@ -107,15 +91,7 @@ abstract class BlaspExpressionService
      * @throws Exception
      */
     private function loadConfiguration(array $profanities = null, array $falsePositives = null): void
-    {
-        $this->supportedLanguages = config('blasp.languages');
-
-        if (empty($this->chosenLanguage)) {
-            $this->chosenLanguage = config('blasp.default_language');
-        }
-
-        $this->validateChosenLanguage();
-        
+    {        
         $this->profanities = $profanities ?? config('blasp.profanities');  
         $this->separators = config('blasp.separators');
         $this->substitutions = config('blasp.substitutions');
@@ -214,16 +190,5 @@ abstract class BlaspExpressionService
     private function generateFalsePositiveExpressionArray(array $falsePositives = null): void
     {
         $this->falsePositives = array_map('strtolower', $falsePositives ?? config('blasp.false_positives'));
-    }
-
-    /**
-     * @return void
-     * @throws Exception
-     */
-    private function validateChosenLanguage(): void
-    {
-        if (!in_array($this->chosenLanguage, $this->supportedLanguages, true)) {
-            throw new Exception('Unsupported language.');
-        }
     }
 }
