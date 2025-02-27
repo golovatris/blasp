@@ -88,7 +88,7 @@ class BlaspService extends BlaspExpressionService
      */
     public function configure(?array $profanities = null, ?array $falsePositives = null): self
     {
-        $blasp = new BlaspService(null, $profanities, $falsePositives);
+        $blasp = new BlaspService($profanities, $falsePositives);
 
         return $blasp;
     }
