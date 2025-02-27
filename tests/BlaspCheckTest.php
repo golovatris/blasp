@@ -5,7 +5,7 @@ namespace Blaspsoft\Blasp\Tests;
 use Exception;
 use Blaspsoft\Blasp\BlaspService;
 
-class BlaspCheckTests extends TestCase
+class BlaspCheckTest extends TestCase
 {
     protected $blaspService;
 
