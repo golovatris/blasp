@@ -72,7 +72,6 @@ class BlaspService extends BlaspExpressionService
      */
     public function __construct(?string $language = null)
     {
-
         parent::__construct($language);
 
         $this->profanityDetector = new ProfanityDetector($this->profanityExpressions, $this->falsePositives);

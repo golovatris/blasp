@@ -88,7 +88,7 @@ abstract class BlaspExpressionService
      * @throws Exception
      */
     public function __construct(?string $language = null)
-    {
+    {        
         $this->chosenLanguage = $language;
 
         $this->loadConfiguration();
@@ -118,7 +118,7 @@ abstract class BlaspExpressionService
 
         $this->validateChosenLanguage();
 
-        $this->profanities = config('blasp.profanities')[$this->chosenLanguage];  
+        $this->profanities = config('blasp.profanities');  
         $this->separators = config('blasp.separators');
         $this->substitutions = config('blasp.substitutions');
     }
@@ -127,8 +127,17 @@ abstract class BlaspExpressionService
      * @return string
      */
     private function generateSeparatorExpression(): string
-    {
-        return $this->generateEscapedExpression($this->separators, $this->escapedSeparatorCharacters);
+    {        
+        // Get all separators except period
+        $normalSeparators = array_filter($this->separators, function($sep) {
+            return $sep !== '.';
+        });
+
+        // Create the pattern for normal separators
+        $pattern = $this->generateEscapedExpression($normalSeparators, $this->escapedSeparatorCharacters);
+        
+        // Add period and 's' as optional characters that must be followed by a word character
+        return '(?:' . $pattern . '|\.(?=\w)|(?:\s))*?';
     }
 
     /**
@@ -204,7 +213,7 @@ abstract class BlaspExpressionService
      */
     private function generateFalsePositiveExpressionArray(): void
     {
-        $this->falsePositives = array_map('strtolower', config('blasp.false_positives')[$this->chosenLanguage]);
+        $this->falsePositives = array_map('strtolower', config('blasp.false_positives'));
     }
 
     /**
