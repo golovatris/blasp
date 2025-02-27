@@ -47,7 +47,7 @@ abstract class BlaspExpressionService
      *
      * @var array
      */
-    protected array $profanityExpressions;
+    protected array $profanityExpressions = [];
 
     /**
      * An array of separator expression profanities
@@ -82,24 +82,22 @@ abstract class BlaspExpressionService
      *
      * @var array
      */
-    protected array $falsePositives;
+    protected array $falsePositives = [];
 
     /**
      * @throws Exception
      */
-    public function __construct(?string $language = null)
+    public function __construct(?string $language = null, ?array $profanities = null, ?array $falsePositives = null)
     {        
         $this->chosenLanguage = $language;
 
-        $this->loadConfiguration();
+        $this->loadConfiguration($profanities, $falsePositives);
 
         $this->separatorExpression = $this->generateSeparatorExpression();
 
         $this->characterExpressions = $this->generateSubstitutionExpression();
 
         $this->generateProfanityExpressionArray();
-
-        $this->generateFalsePositiveExpressionArray();
     }
 
     /**
@@ -108,7 +106,7 @@ abstract class BlaspExpressionService
      *
      * @throws Exception
      */
-    private function loadConfiguration(): void
+    private function loadConfiguration(array $profanities = null, array $falsePositives = null): void
     {
         $this->supportedLanguages = config('blasp.languages');
 
@@ -117,10 +115,12 @@ abstract class BlaspExpressionService
         }
 
         $this->validateChosenLanguage();
-
-        $this->profanities = config('blasp.profanities');  
+        
+        $this->profanities = $profanities ?? config('blasp.profanities');  
         $this->separators = config('blasp.separators');
         $this->substitutions = config('blasp.substitutions');
+
+        $this->generateFalsePositiveExpressionArray($falsePositives);
     }
 
     /**
@@ -211,9 +211,9 @@ abstract class BlaspExpressionService
      *
      * @return void
      */
-    private function generateFalsePositiveExpressionArray(): void
+    private function generateFalsePositiveExpressionArray(array $falsePositives = null): void
     {
-        $this->falsePositives = array_map('strtolower', config('blasp.false_positives'));
+        $this->falsePositives = array_map('strtolower', $falsePositives ?? config('blasp.false_positives'));
     }
 
     /**
