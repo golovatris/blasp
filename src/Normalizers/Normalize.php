@@ -6,13 +6,8 @@ use Blaspsoft\Blasp\Abstracts\StringNormalizer;
 
 class Normalize
 {
-    public static function getLanguageNormalizerInstance(string $language): StringNormalizer
+    public static function getLanguageNormalizerInstance(): StringNormalizer
     {
-        switch($language){
-            case 'fr':
-                return new FrenchStringNormalizer();
-            default:
-                return new EnglishStringNormalizer();
-        }
+        return new EnglishStringNormalizer();
     }
 }

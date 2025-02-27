@@ -147,13 +147,14 @@ class BlaspCheckTest extends TestCase
     public function test_false_positives()
     {
         $words = [
+            'Blackcocktail',
             'Scunthorpe',
             'Cockburn',
             'Penistone',
             'Lightwater',
             'Assume',
-            'bass',
-            'class',
+            'Bass',
+            'Class',
             'Compass',
             'Pass',
             'Dickinson',
@@ -166,17 +167,20 @@ class BlaspCheckTest extends TestCase
             'Flick',
             'Flicker',
             'Analyst',
-            'blackCocktail',
         ];
 
         foreach ($words as $word) {
 
             $result =  $this->blaspService->check($word);
 
-            $this->assertTrue(!$result->hasProfanity);
-            $this->assertSame(0, $result->profanitiesCount);
-            $this->assertCount(0, $result->uniqueProfanitiesFound);
-            $this->assertSame($word, $result->cleanString);       
+            try {
+                $this->assertTrue(!$result->hasProfanity);
+                $this->assertSame(0, $result->profanitiesCount);
+                $this->assertCount(0, $result->uniqueProfanitiesFound);
+                $this->assertSame($word, $result->cleanString);       
+            } catch (\Exception $e) {
+                dd($result);
+            }
         }
     }
 

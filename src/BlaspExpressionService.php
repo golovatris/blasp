@@ -3,9 +3,12 @@
 namespace Blaspsoft\Blasp;
 
 use Exception;
+use Blaspsoft\Blasp\Traits\BlaspCache;
 
 abstract class BlaspExpressionService
 {
+    use BlaspCache;
+
     /**
      * Value used as a the separator placeholder.
      *
@@ -47,7 +50,7 @@ abstract class BlaspExpressionService
      *
      * @var array
      */
-    protected array $profanityExpressions;
+    protected array $profanityExpressions = [];
 
     /**
      * An array of separator expression profanities
@@ -64,71 +67,68 @@ abstract class BlaspExpressionService
     protected array $characterExpressions;
 
     /**
-     * Language the package should use
-     *
-     * @var string|null
-     */
-    protected ?string $chosenLanguage;
-
-    /**
-     * Languages supported by the package
-     *
-     * @var array
-     */
-    protected array $supportedLanguages;
-
-    /**
      * An array of false positive expressions
      *
      * @var array
      */
-    protected array $falsePositives;
+    protected array $falsePositives = [];
 
     /**
      * @throws Exception
      */
-    public function __construct(?string $language = null)
-    {
-        $this->chosenLanguage = $language;
-
-        $this->loadConfiguration();
+    public function __construct(?array $profanities = null, ?array $falsePositives = null)
+    {        
+        $this->loadConfiguration($profanities, $falsePositives);
 
         $this->separatorExpression = $this->generateSeparatorExpression();
 
         $this->characterExpressions = $this->generateSubstitutionExpression();
 
         $this->generateProfanityExpressionArray();
-
-        $this->generateFalsePositiveExpressionArray();
     }
 
     /**
      * Load Profanities, Separators and Substitutions
-     * from config file.
-     *
-     * @throws Exception
+     * from config file or custom arrays.
      */
-    private function loadConfiguration(): void
+    private function loadConfiguration(?array $customProfanities = null, ?array $customFalsePositives = null): void
     {
-        $this->supportedLanguages = config('blasp.languages');
+        // Set the profanities and false positives
+        $this->profanities = $customProfanities ?? config('blasp.profanities');
+        $this->falsePositives = $customFalsePositives ?? config('blasp.false_positives');
 
-        if (empty($this->chosenLanguage)) {
-            $this->chosenLanguage = config('blasp.default_language');
-        }
+        $this->loadFromCacheOrGenerate();
+    }
 
-        $this->validateChosenLanguage();
-
-        $this->profanities = config('blasp.profanities')[$this->chosenLanguage];  
+    /**
+     * Load configuration without using cache
+     */
+    private function loadUncachedConfiguration(): void
+    {
         $this->separators = config('blasp.separators');
         $this->substitutions = config('blasp.substitutions');
+        
+        // Generate expressions
+        $this->separatorExpression = $this->generateSeparatorExpression();
+        $this->characterExpressions = $this->generateSubstitutionExpression();
+        $this->generateProfanityExpressionArray();
     }
 
     /**
      * @return string
      */
     private function generateSeparatorExpression(): string
-    {
-        return $this->generateEscapedExpression($this->separators, $this->escapedSeparatorCharacters);
+    {        
+        // Get all separators except period
+        $normalSeparators = array_filter($this->separators, function($sep) {
+            return $sep !== '.';
+        });
+
+        // Create the pattern for normal separators
+        $pattern = $this->generateEscapedExpression($normalSeparators, $this->escapedSeparatorCharacters);
+        
+        // Add period and 's' as optional characters that must be followed by a word character
+        return '(?:' . $pattern . '|\.(?=\w)|(?:\s))*?';
     }
 
     /**
@@ -195,26 +195,5 @@ abstract class BlaspExpressionService
         $expression = '/' . $expression . '/i';
         
         return $expression;
-    }
-
-    /**
-     * Generate an array of false positive expressions.
-     *
-     * @return void
-     */
-    private function generateFalsePositiveExpressionArray(): void
-    {
-        $this->falsePositives = array_map('strtolower', config('blasp.false_positives')[$this->chosenLanguage]);
-    }
-
-    /**
-     * @return void
-     * @throws Exception
-     */
-    private function validateChosenLanguage(): void
-    {
-        if (!in_array($this->chosenLanguage, $this->supportedLanguages, true)) {
-            throw new Exception('Unsupported language.');
-        }
     }
 }
