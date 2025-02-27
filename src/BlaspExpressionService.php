@@ -3,9 +3,12 @@
 namespace Blaspsoft\Blasp;
 
 use Exception;
+use Blaspsoft\Blasp\Traits\BlaspCache;
 
 abstract class BlaspExpressionService
 {
+    use BlaspCache;
+
     /**
      * Value used as a the separator placeholder.
      *
@@ -86,17 +89,29 @@ abstract class BlaspExpressionService
 
     /**
      * Load Profanities, Separators and Substitutions
-     * from config file.
-     *
-     * @throws Exception
+     * from config file or custom arrays.
      */
-    private function loadConfiguration(array $profanities = null, array $falsePositives = null): void
-    {        
-        $this->profanities = $profanities ?? config('blasp.profanities');  
+    private function loadConfiguration(?array $customProfanities = null, ?array $customFalsePositives = null): void
+    {
+        // Set the profanities and false positives
+        $this->profanities = $customProfanities ?? config('blasp.profanities');
+        $this->falsePositives = $customFalsePositives ?? config('blasp.false_positives');
+
+        $this->loadFromCacheOrGenerate();
+    }
+
+    /**
+     * Load configuration without using cache
+     */
+    private function loadUncachedConfiguration(): void
+    {
         $this->separators = config('blasp.separators');
         $this->substitutions = config('blasp.substitutions');
-
-        $this->generateFalsePositiveExpressionArray($falsePositives);
+        
+        // Generate expressions
+        $this->separatorExpression = $this->generateSeparatorExpression();
+        $this->characterExpressions = $this->generateSubstitutionExpression();
+        $this->generateProfanityExpressionArray();
     }
 
     /**
@@ -180,15 +195,5 @@ abstract class BlaspExpressionService
         $expression = '/' . $expression . '/i';
         
         return $expression;
-    }
-
-    /**
-     * Generate an array of false positive expressions.
-     *
-     * @return void
-     */
-    private function generateFalsePositiveExpressionArray(array $falsePositives = null): void
-    {
-        $this->falsePositives = array_map('strtolower', $falsePositives ?? config('blasp.false_positives'));
     }
 }

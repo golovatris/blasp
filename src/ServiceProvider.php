@@ -15,6 +15,9 @@ class ServiceProvider extends BaseServiceProvider
             $this->publishes([
                 __DIR__.'/../config/config.php' => config_path('blasp.php'),
             ], 'blasp-config');
+            $this->commands([
+                Console\Commands\BlaspClearCommand::class,
+            ]);
         }
 
         app('validator')->extend('blasp_check', function($attribute, $value, $parameters, $validator) {
