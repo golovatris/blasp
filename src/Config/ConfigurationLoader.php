@@ -3,6 +3,7 @@
 namespace Blaspsoft\Blasp\Config;
 
 use Blaspsoft\Blasp\Contracts\DetectionConfigInterface;
+use Blaspsoft\Blasp\Contracts\MultiLanguageConfigInterface;
 use Blaspsoft\Blasp\Contracts\ExpressionGeneratorInterface;
 
 class ConfigurationLoader
@@ -40,6 +41,39 @@ class ConfigurationLoader
     }
 
     /**
+     * Load multi-language configuration.
+     *
+     * @param array $languageData
+     * @param string $defaultLanguage
+     * @return MultiLanguageConfigInterface
+     */
+    public function loadMultiLanguage(array $languageData = [], string $defaultLanguage = 'english'): MultiLanguageConfigInterface
+    {
+        // If no language data provided, load from config
+        if (empty($languageData)) {
+            $languageData = [
+                'english' => [
+                    'profanities' => config('blasp.profanities'),
+                    'false_positives' => config('blasp.false_positives')
+                ]
+            ];
+        }
+
+        $separators = config('blasp.separators');
+        $substitutions = config('blasp.substitutions');
+
+        $config = new MultiLanguageDetectionConfig(
+            $languageData,
+            $separators,
+            $substitutions,
+            $defaultLanguage,
+            $this->expressionGenerator
+        );
+
+        return $this->loadFromCacheOrGenerate($config);
+    }
+
+    /**
      * Try to load configuration from cache, otherwise generate and cache it.
      *
      * @param DetectionConfigInterface $config
@@ -66,6 +100,17 @@ class ConfigurationLoader
      */
     private function loadFromCache(array $cached): DetectionConfigInterface
     {
+        // Check if this is a multi-language configuration
+        if (isset($cached['language_data'])) {
+            return new MultiLanguageDetectionConfig(
+                $cached['language_data'],
+                $cached['separators'],
+                $cached['substitutions'],
+                $cached['default_language'] ?? 'english',
+                $this->expressionGenerator
+            );
+        }
+
         return new DetectionConfig(
             $cached['profanities'],
             $cached['falsePositives'],
@@ -90,6 +135,20 @@ class ConfigurationLoader
             'separators' => $config->getSeparators(),
             'substitutions' => $config->getSubstitutions(),
         ];
+
+        // Add multi-language specific data if applicable
+        if ($config instanceof MultiLanguageConfigInterface) {
+            $languageData = [];
+            foreach ($config->getAvailableLanguages() as $language) {
+                $languageData[$language] = [
+                    'profanities' => $config->getProfanitiesForLanguage($language),
+                    'false_positives' => $config->getFalsePositivesForLanguage($language)
+                ];
+            }
+            
+            $configToCache['language_data'] = $languageData;
+            $configToCache['default_language'] = $config->getCurrentLanguage();
+        }
 
         cache()->put($cacheKey, $configToCache, self::CACHE_TTL);
         $this->trackCacheKey($cacheKey);

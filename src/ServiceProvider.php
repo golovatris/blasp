@@ -3,6 +3,12 @@
 namespace Blaspsoft\Blasp;
  
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
+use Blaspsoft\Blasp\Config\ConfigurationLoader;
+use Blaspsoft\Blasp\Contracts\ExpressionGeneratorInterface;
+use Blaspsoft\Blasp\Generators\ProfanityExpressionGenerator;
+use Blaspsoft\Blasp\Plugins\PluginManager;
+use Blaspsoft\Blasp\Registries\LanguageNormalizerRegistry;
+use Blaspsoft\Blasp\Registries\DetectionStrategyRegistry;
 
 class ServiceProvider extends BaseServiceProvider
 {
@@ -36,8 +42,37 @@ class ServiceProvider extends BaseServiceProvider
     {
         $this->mergeConfigFrom(__DIR__.'/../config/config.php', 'blasp');
 
-        $this->app->bind('blasp', function () {
-            return new BlaspService();
+        // Register core interfaces and implementations
+        $this->app->singleton(ExpressionGeneratorInterface::class, ProfanityExpressionGenerator::class);
+        $this->app->singleton(LanguageNormalizerRegistry::class);
+        $this->app->singleton(DetectionStrategyRegistry::class);
+        
+        // Register configuration loader with dependency injection
+        $this->app->singleton(ConfigurationLoader::class, function ($app) {
+            return new ConfigurationLoader(
+                $app->make(ExpressionGeneratorInterface::class)
+            );
+        });
+
+        // Register plugin manager with dependency injection
+        $this->app->singleton(PluginManager::class, function ($app) {
+            return new PluginManager(
+                $app->make(DetectionStrategyRegistry::class)
+            );
+        });
+
+        // Register main BlaspService with dependency injection
+        $this->app->bind(BlaspService::class, function ($app) {
+            return new BlaspService(
+                null, // profanities
+                null, // false positives
+                $app->make(ConfigurationLoader::class)
+            );
+        });
+
+        // Maintain backward compatibility with 'blasp' alias
+        $this->app->bind('blasp', function ($app) {
+            return $app->make(BlaspService::class);
         });
     }
 }
