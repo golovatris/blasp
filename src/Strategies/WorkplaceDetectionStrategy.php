@@ -2,9 +2,9 @@
 
 namespace Blaspsoft\Blasp\Strategies;
 
-use Blaspsoft\Blasp\Contracts\DetectionStrategyInterface;
+use Blaspsoft\Blasp\Abstracts\BaseDetectionStrategy;
 
-class WorkplaceDetectionStrategy implements DetectionStrategyInterface
+class WorkplaceDetectionStrategy extends BaseDetectionStrategy
 {
     private array $workplaceProfanities = [
         'incompetent',
@@ -44,14 +44,14 @@ class WorkplaceDetectionStrategy implements DetectionStrategyInterface
                     $length = strlen($match[0]);
 
                     if (!$this->isFalsePositive($match[0], $falsePositives)) {
-                        $matches[] = [
-                            'profanity' => $profanity,
-                            'match' => $match[0],
-                            'start' => $start,
-                            'length' => $length,
-                            'full_word' => $match[0],
-                            'strategy' => 'workplace'
-                        ];
+                        $matches[] = $this->createMatchResult(
+                            $profanity,
+                            $match[0], 
+                            $start, 
+                            $length, 
+                            $match[0],
+                            $this->getName()
+                        );
                     }
                 }
             }
@@ -67,14 +67,14 @@ class WorkplaceDetectionStrategy implements DetectionStrategyInterface
         foreach ($inappropriatePatterns as $pattern) {
             if (preg_match_all($pattern, $text, $patternMatches, PREG_OFFSET_CAPTURE)) {
                 foreach ($patternMatches[0] as $match) {
-                    $matches[] = [
-                        'profanity' => 'workplace_inappropriate',
-                        'match' => $match[0],
-                        'start' => $match[1],
-                        'length' => strlen($match[0]),
-                        'full_word' => $match[0],
-                        'strategy' => 'workplace'
-                    ];
+                    $matches[] = $this->createMatchResult(
+                        'workplace_inappropriate',
+                        $match[0], 
+                        $match[1], 
+                        strlen($match[0]), 
+                        $match[0],
+                        $this->getName()
+                    );
                 }
             }
         }
@@ -106,8 +106,4 @@ class WorkplaceDetectionStrategy implements DetectionStrategyInterface
         return false;
     }
 
-    private function isFalsePositive(string $word, array $falsePositives): bool
-    {
-        return in_array(strtolower($word), $falsePositives, true);
-    }
 }

@@ -6,6 +6,16 @@ use Blaspsoft\Blasp\Registries\DetectionStrategyRegistry;
 use Blaspsoft\Blasp\Contracts\DetectionStrategyInterface;
 use Blaspsoft\Blasp\Strategies\DefaultDetectionStrategy;
 
+/**
+ * Plugin manager for coordinating multiple detection strategies.
+ * 
+ * Manages the registration, removal, and execution of profanity detection 
+ * strategies, providing a centralized plugin system for extensible detection.
+ * 
+ * @package Blaspsoft\Blasp\Plugins
+ * @author Blasp Package
+ * @since 3.0.0
+ */
 class PluginManager
 {
     private DetectionStrategyRegistry $strategyRegistry;

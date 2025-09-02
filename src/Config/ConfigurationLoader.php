@@ -6,6 +6,17 @@ use Blaspsoft\Blasp\Contracts\DetectionConfigInterface;
 use Blaspsoft\Blasp\Contracts\MultiLanguageConfigInterface;
 use Blaspsoft\Blasp\Contracts\ExpressionGeneratorInterface;
 
+/**
+ * Configuration loader with caching support for profanity detection.
+ * 
+ * Handles loading and caching of detection configurations, including 
+ * single-language and multi-language configurations with automatic 
+ * cache invalidation and optimization.
+ * 
+ * @package Blaspsoft\Blasp\Config
+ * @author Blasp Package
+ * @since 3.0.0
+ */
 class ConfigurationLoader
 {
     private const CACHE_TTL = 86400; // 24 hours

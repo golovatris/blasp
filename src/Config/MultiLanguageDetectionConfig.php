@@ -9,6 +9,16 @@ use Blaspsoft\Blasp\Normalizers\Normalize;
 use Blaspsoft\Blasp\Abstracts\StringNormalizer;
 use InvalidArgumentException;
 
+/**
+ * Multi-language detection configuration for profanity filtering.
+ * 
+ * Manages profanities, false positives, and configurations across multiple 
+ * languages with dynamic language switching and expression generation.
+ * 
+ * @package Blaspsoft\Blasp\Config
+ * @author Blasp Package
+ * @since 3.0.0
+ */
 class MultiLanguageDetectionConfig implements MultiLanguageConfigInterface
 {
     private string $currentLanguage = 'english';

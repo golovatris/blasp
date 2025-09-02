@@ -9,6 +9,16 @@ use Blaspsoft\Blasp\Strategies\SocialMediaDetectionStrategy;
 use Blaspsoft\Blasp\Strategies\WorkplaceDetectionStrategy;
 use InvalidArgumentException;
 
+/**
+ * Factory for creating and managing profanity detection strategies.
+ * 
+ * Provides methods to create individual strategies, multiple strategies,
+ * and context-aware strategy selection for different domains.
+ * 
+ * @package Blaspsoft\Blasp\Factories
+ * @author Blasp Package
+ * @since 3.0.0
+ */
 class StrategyFactory
 {
     private static array $availableStrategies = [

@@ -47,6 +47,13 @@ class BlaspService
     public array $uniqueProfanitiesFound = [];
 
     /**
+     * Hash map for O(1) unique profanity tracking.
+     *
+     * @var array
+     */
+    private array $uniqueProfanitiesMap = [];
+
+    /**
      * Language the package should use
      *
      * @var string|null
@@ -131,6 +138,12 @@ class BlaspService
 
         $this->cleanString = $string;
 
+        // Reset tracking variables
+        $this->hasProfanity = false;
+        $this->profanitiesCount = 0;
+        $this->uniqueProfanitiesFound = [];
+        $this->uniqueProfanitiesMap = [];
+
         $this->handle();
 
         return $this;
@@ -179,9 +192,10 @@ class BlaspService
 
                         $normalizedString = substr_replace($normalizedString, str_repeat('*', $length), $start, $length);
 
-                        // Avoid adding duplicates to the unique list
-                        if (!in_array($profanity, $this->uniqueProfanitiesFound)) {
+                        // Avoid adding duplicates to the unique list using hash map for O(1) lookup
+                        if (!isset($this->uniqueProfanitiesMap[$profanity])) {
                             $this->uniqueProfanitiesFound[] = $profanity;
+                            $this->uniqueProfanitiesMap[$profanity] = true;
                         }
                     }
                 }

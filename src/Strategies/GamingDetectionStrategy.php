@@ -2,9 +2,9 @@
 
 namespace Blaspsoft\Blasp\Strategies;
 
-use Blaspsoft\Blasp\Contracts\DetectionStrategyInterface;
+use Blaspsoft\Blasp\Abstracts\BaseDetectionStrategy;
 
-class GamingDetectionStrategy implements DetectionStrategyInterface
+class GamingDetectionStrategy extends BaseDetectionStrategy
 {
     private array $gamingProfanities = [
         'noob',
@@ -45,14 +45,14 @@ class GamingDetectionStrategy implements DetectionStrategyInterface
 
                     // Check if it's not a false positive
                     if (!$this->isFalsePositive($match[0], $falsePositives)) {
-                        $matches[] = [
-                            'profanity' => $profanity,
-                            'match' => $match[0],
-                            'start' => $start,
-                            'length' => $length,
-                            'full_word' => $match[0],
-                            'strategy' => 'gaming'
-                        ];
+                        $matches[] = $this->createMatchResult(
+                            $profanity,
+                            $match[0], 
+                            $start, 
+                            $length, 
+                            $match[0],
+                            $this->getName()
+                        );
                     }
                 }
             }
@@ -86,8 +86,4 @@ class GamingDetectionStrategy implements DetectionStrategyInterface
         return false;
     }
 
-    private function isFalsePositive(string $word, array $falsePositives): bool
-    {
-        return in_array(strtolower($word), $falsePositives, true);
-    }
 }

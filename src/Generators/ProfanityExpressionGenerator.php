@@ -4,6 +4,14 @@ namespace Blaspsoft\Blasp\Generators;
 
 use Blaspsoft\Blasp\Contracts\ExpressionGeneratorInterface;
 
+/**
+ * Profanity expression generator for creating regular expressions 
+ * to detect profanities with various substitutions and separators.
+ * 
+ * @package Blaspsoft\Blasp\Generators
+ * @author Blasp Package
+ * @since 3.0.0
+ */
 class ProfanityExpressionGenerator implements ExpressionGeneratorInterface
 {
     /**

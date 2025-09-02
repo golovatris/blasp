@@ -2,9 +2,9 @@
 
 namespace Blaspsoft\Blasp\Strategies;
 
-use Blaspsoft\Blasp\Contracts\DetectionStrategyInterface;
+use Blaspsoft\Blasp\Abstracts\BaseDetectionStrategy;
 
-class DefaultDetectionStrategy implements DetectionStrategyInterface
+class DefaultDetectionStrategy extends BaseDetectionStrategy
 {
     public function getName(): string
     {
@@ -34,13 +34,14 @@ class DefaultDetectionStrategy implements DetectionStrategyInterface
 
                     // Check if the full word is in the false positives list
                     if (!$this->isFalsePositive($fullWord, $falsePositives)) {
-                        $matches[] = [
-                            'profanity' => $profanity,
-                            'match' => $match[0],
-                            'start' => $start,
-                            'length' => $length,
-                            'full_word' => $fullWord
-                        ];
+                        $matches[] = $this->createMatchResult(
+                            $profanity,
+                            $match[0], 
+                            $start, 
+                            $length, 
+                            $fullWord,
+                            $this->getName()
+                        );
                     }
                 }
             }
@@ -55,43 +56,4 @@ class DefaultDetectionStrategy implements DetectionStrategyInterface
         return true;
     }
 
-    /**
-     * Get the full word context surrounding the matched profanity.
-     *
-     * @param string $string
-     * @param int $start
-     * @param int $length
-     * @return string
-     */
-    private function getFullWordContext(string $string, int $start, int $length): string
-    {
-        // Define word boundaries (spaces, punctuation, etc.)
-        $left = $start;
-        $right = $start + $length;
-
-        // Move the left pointer backwards to find the start of the full word
-        while ($left > 0 && preg_match('/\w/', $string[$left - 1])) {
-            $left--;
-        }
-
-        // Move the right pointer forwards to find the end of the full word
-        while ($right < strlen($string) && preg_match('/\w/', $string[$right])) {
-            $right++;
-        }
-
-        // Return the full word surrounding the matched profanity
-        return substr($string, $left, $right - $left);
-    }
-
-    /**
-     * Check if a word is a false positive.
-     *
-     * @param string $word
-     * @param array $falsePositives
-     * @return bool
-     */
-    private function isFalsePositive(string $word, array $falsePositives): bool
-    {
-        return in_array(strtolower($word), $falsePositives, true);
-    }
 }

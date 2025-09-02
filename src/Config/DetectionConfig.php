@@ -6,6 +6,16 @@ use Blaspsoft\Blasp\Contracts\DetectionConfigInterface;
 use Blaspsoft\Blasp\Contracts\ExpressionGeneratorInterface;
 use Blaspsoft\Blasp\Generators\ProfanityExpressionGenerator;
 
+/**
+ * Single-language detection configuration for profanity filtering.
+ * 
+ * Contains profanities, false positives, separators, substitutions,
+ * and generated regular expressions for a single language context.
+ * 
+ * @package Blaspsoft\Blasp\Config
+ * @author Blasp Package
+ * @since 3.0.0
+ */
 class DetectionConfig implements DetectionConfigInterface
 {
     private array $profanities;

@@ -2,9 +2,9 @@
 
 namespace Blaspsoft\Blasp\Strategies;
 
-use Blaspsoft\Blasp\Contracts\DetectionStrategyInterface;
+use Blaspsoft\Blasp\Abstracts\BaseDetectionStrategy;
 
-class SocialMediaDetectionStrategy implements DetectionStrategyInterface
+class SocialMediaDetectionStrategy extends BaseDetectionStrategy
 {
     private array $socialMediaProfanities = [
         'hate',
@@ -45,14 +45,14 @@ class SocialMediaDetectionStrategy implements DetectionStrategyInterface
                     $length = strlen($match[0]);
 
                     if (!$this->isFalsePositive($match[0], $falsePositives)) {
-                        $matches[] = [
-                            'profanity' => $profanity,
-                            'match' => $match[0],
-                            'start' => $start,
-                            'length' => $length,
-                            'full_word' => $match[0],
-                            'strategy' => 'social_media'
-                        ];
+                        $matches[] = $this->createMatchResult(
+                            $profanity,
+                            $match[0], 
+                            $start, 
+                            $length, 
+                            $match[0],
+                            $this->getName()
+                        );
                     }
                 }
             }
@@ -61,14 +61,14 @@ class SocialMediaDetectionStrategy implements DetectionStrategyInterface
         // Check for hashtag-based toxicity
         if (preg_match_all('/#\w*(' . implode('|', $this->socialMediaProfanities) . ')\w*/i', $text, $hashtagMatches, PREG_OFFSET_CAPTURE)) {
             foreach ($hashtagMatches[0] as $match) {
-                $matches[] = [
-                    'profanity' => 'hashtag_profanity',
-                    'match' => $match[0],
-                    'start' => $match[1],
-                    'length' => strlen($match[0]),
-                    'full_word' => $match[0],
-                    'strategy' => 'social_media'
-                ];
+                $matches[] = $this->createMatchResult(
+                    'hashtag_profanity',
+                    $match[0], 
+                    $match[1], 
+                    strlen($match[0]), 
+                    $match[0],
+                    $this->getName()
+                );
             }
         }
 
@@ -100,8 +100,4 @@ class SocialMediaDetectionStrategy implements DetectionStrategyInterface
         return false;
     }
 
-    private function isFalsePositive(string $word, array $falsePositives): bool
-    {
-        return in_array(strtolower($word), $falsePositives, true);
-    }
 }
