@@ -5,8 +5,10 @@ namespace Blaspsoft\Blasp;
 use Exception;
 use Blaspsoft\Blasp\Normalizers\Normalize;
 use Blaspsoft\Blasp\Abstracts\StringNormalizer;
+use Blaspsoft\Blasp\Contracts\DetectionConfigInterface;
+use Blaspsoft\Blasp\Config\ConfigurationLoader;
 
-class BlaspService extends BlaspExpressionService
+class BlaspService
 {
     /**
      * The incoming string to check for profanities.
@@ -44,13 +46,26 @@ class BlaspService extends BlaspExpressionService
      */
     public array $uniqueProfanitiesFound = [];
 
-
     /**
      * Language the package should use
      *
      * @var string|null
      */
     protected ?string $chosenLanguage;
+
+    /**
+     * Detection configuration instance.
+     *
+     * @var DetectionConfigInterface
+     */
+    private DetectionConfigInterface $config;
+
+    /**
+     * Configuration loader instance.
+     *
+     * @var ConfigurationLoader
+     */
+    private ConfigurationLoader $configurationLoader;
 
     /**
      * Profanity detector instance.
@@ -67,16 +82,23 @@ class BlaspService extends BlaspExpressionService
     private StringNormalizer $stringNormalizer;
 
     /**
-     * Initialise the class and parent class.
+     * Initialise the class.
      *
      */
-    public function __construct(?array $profanities = null, ?array $falsePositives = null)
-    {
-        parent::__construct($profanities, $falsePositives);
+    public function __construct(
+        ?array $profanities = null,
+        ?array $falsePositives = null,
+        ?ConfigurationLoader $configurationLoader = null
+    ) {
+        $this->configurationLoader = $configurationLoader ?? new ConfigurationLoader();
+        $this->config = $this->configurationLoader->load($profanities, $falsePositives);
 
-        $this->profanityDetector = new ProfanityDetector($this->profanityExpressions, $this->falsePositives);
+        $this->profanityDetector = new ProfanityDetector(
+            $this->config->getProfanityExpressions(),
+            $this->config->getFalsePositives()
+        );
 
-        $this->stringNormalizer =  Normalize::getLanguageNormalizerInstance();
+        $this->stringNormalizer = Normalize::getLanguageNormalizerInstance();
     }
 
     /**
@@ -88,7 +110,7 @@ class BlaspService extends BlaspExpressionService
      */
     public function configure(?array $profanities = null, ?array $falsePositives = null): self
     {
-        $blasp = new BlaspService($profanities, $falsePositives);
+        $blasp = new BlaspService($profanities, $falsePositives, $this->configurationLoader);
 
         return $blasp;
     }

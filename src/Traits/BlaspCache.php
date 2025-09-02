@@ -96,13 +96,6 @@ trait BlaspCache
      */
     public static function clearCache(): void
     {
-        $cache = cache();
-        
-        $keys = $cache->get('blasp_cache_keys', []);
-        foreach ($keys as $key) {
-            $cache->forget($key);
-        }
-        
-        $cache->forget('blasp_cache_keys');
+        \Blaspsoft\Blasp\Config\ConfigurationLoader::clearCache();
     }
 }
