@@ -31,7 +31,9 @@ class Normalize
 
     private static function registerDefaultNormalizers(): void
     {
-        self::$registry->register('english', new EnglishStringNormalizer());
-        self::$registry->register('french', new FrenchStringNormalizer());
+        self::$registry->register('english', new \Blaspsoft\Blasp\Normalizers\EnglishStringNormalizer());
+        self::$registry->register('french', new \Blaspsoft\Blasp\Normalizers\FrenchStringNormalizer());
+        self::$registry->register('spanish', new \Blaspsoft\Blasp\Normalizers\SpanishStringNormalizer());
+        self::$registry->register('german', new \Blaspsoft\Blasp\Normalizers\GermanStringNormalizer());
     }
 }

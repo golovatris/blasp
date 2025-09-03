@@ -35,8 +35,33 @@ class ConfigurationLoader
      */
     public function load(?array $customProfanities = null, ?array $customFalsePositives = null): DetectionConfigInterface
     {
-        $profanities = $customProfanities ?? config('blasp.profanities');
-        $falsePositives = $customFalsePositives ?? config('blasp.false_positives');
+        // Try to load from English language file first, fall back to config if that fails
+        $profanities = $customProfanities;
+        $falsePositives = $customFalsePositives;
+        
+        if ($profanities === null) {
+            try {
+                $englishData = $this->loadLanguage('english');
+                $profanities = $englishData['profanities'] ?? [];
+                if (empty($profanities)) {
+                    throw new \Exception('No profanities found in English language file');
+                }
+            } catch (\Exception $e) {
+                // Fall back to config file
+                $profanities = config('blasp.profanities');
+            }
+        }
+        
+        if ($falsePositives === null) {
+            try {
+                $englishData = $this->loadLanguage('english');
+                $falsePositives = $englishData['false_positives'] ?? [];
+            } catch (\Exception $e) {
+                // Fall back to config file
+                $falsePositives = config('blasp.false_positives');
+            }
+        }
+
         $separators = config('blasp.separators');
         $substitutions = config('blasp.substitutions');
 
@@ -60,14 +85,9 @@ class ConfigurationLoader
      */
     public function loadMultiLanguage(array $languageData = [], string $defaultLanguage = 'english'): MultiLanguageConfigInterface
     {
-        // If no language data provided, load from config
+        // If no language data provided, load from language files
         if (empty($languageData)) {
-            $languageData = [
-                'english' => [
-                    'profanities' => config('blasp.profanities'),
-                    'false_positives' => config('blasp.false_positives')
-                ]
-            ];
+            $languageData = $this->loadLanguageFiles();
         }
 
         $separators = config('blasp.separators');
@@ -82,6 +102,138 @@ class ConfigurationLoader
         );
 
         return $this->loadFromCacheOrGenerate($config);
+    }
+
+    /**
+     * Load all available language files from the languages directory.
+     *
+     * @return array
+     */
+    private function loadLanguageFiles(): array
+    {
+        $languageData = [];
+        
+        // Try multiple possible paths for the languages directory
+        $possiblePaths = [
+            config_path('languages'),
+            __DIR__ . '/../../config/languages',
+            realpath(__DIR__ . '/../../config/languages'),
+        ];
+        
+        $languagesPath = null;
+        foreach ($possiblePaths as $path) {
+            if ($path && is_dir($path)) {
+                $languagesPath = $path;
+                break;
+            }
+        }
+        
+        if (!$languagesPath) {
+            // Fallback to original config structure
+            return [
+                'english' => [
+                    'profanities' => config('blasp.profanities'),
+                    'false_positives' => config('blasp.false_positives')
+                ]
+            ];
+        }
+
+        $languageFiles = glob($languagesPath . '/*.php');
+        
+        foreach ($languageFiles as $languageFile) {
+            $languageName = basename($languageFile, '.php');
+            $languageConfig = require $languageFile;
+            
+            if (is_array($languageConfig) && 
+                isset($languageConfig['profanities']) && 
+                isset($languageConfig['false_positives'])) {
+                $languageData[$languageName] = $languageConfig;
+            }
+        }
+
+        // Ensure English is available as fallback
+        if (empty($languageData['english'])) {
+            $languageData['english'] = [
+                'profanities' => config('blasp.profanities', []),
+                'false_positives' => config('blasp.false_positives', [])
+            ];
+        }
+
+        return $languageData;
+    }
+
+    /**
+     * Get list of available languages from language files.
+     *
+     * @return array
+     */
+    public function getAvailableLanguages(): array
+    {
+        // Try multiple possible paths for the languages directory
+        $possiblePaths = [
+            config_path('languages'),
+            __DIR__ . '/../../config/languages',
+            realpath(__DIR__ . '/../../config/languages'),
+        ];
+        
+        $languagesPath = null;
+        foreach ($possiblePaths as $path) {
+            if ($path && is_dir($path)) {
+                $languagesPath = $path;
+                break;
+            }
+        }
+        
+        if (!$languagesPath) {
+            return ['english'];
+        }
+
+        $languageFiles = glob($languagesPath . '/*.php');
+        $languages = [];
+        
+        foreach ($languageFiles as $languageFile) {
+            $languages[] = basename($languageFile, '.php');
+        }
+
+        return empty($languages) ? ['english'] : $languages;
+    }
+
+    /**
+     * Load a specific language configuration.
+     *
+     * @param string $language
+     * @return array|null
+     */
+    public function loadLanguage(string $language): ?array
+    {
+        // Try multiple possible paths for the language file
+        $possiblePaths = [
+            config_path("languages/{$language}.php"),
+            __DIR__ . "/../../config/languages/{$language}.php",
+            realpath(__DIR__ . "/../../config/languages/{$language}.php"),
+        ];
+        
+        $languageFile = null;
+        foreach ($possiblePaths as $path) {
+            if ($path && file_exists($path)) {
+                $languageFile = $path;
+                break;
+            }
+        }
+        
+        if (!$languageFile) {
+            return null;
+        }
+
+        $languageConfig = require $languageFile;
+        
+        if (!is_array($languageConfig) || 
+            !isset($languageConfig['profanities']) || 
+            !isset($languageConfig['false_positives'])) {
+            return null;
+        }
+
+        return $languageConfig;
     }
 
     /**
