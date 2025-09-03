@@ -159,13 +159,16 @@ class BlaspService
     {
         $continue = true;
 
-        $stringToNormalize = $this->cleanString;
-        $normalizedString = $this->stringNormalizer->normalize($stringToNormalize);
+        // Work with a copy of cleanString that we'll modify in sync with normalized string
+        $workingCleanString = $this->cleanString;
+        $normalizedString = $this->stringNormalizer->normalize($workingCleanString);
 
         // Loop through until no more profanities are detected
         while ($continue) {
             $continue = false;
             $normalizedString = preg_replace('/\s+/', ' ', $normalizedString);
+            $workingCleanString = preg_replace('/\s+/', ' ', $workingCleanString);
+            
             foreach ($this->profanityDetector->getProfanityExpressions() as $profanity => $expression) {
                 preg_match_all($expression, $normalizedString, $matches, PREG_OFFSET_CAPTURE);
 
@@ -173,7 +176,13 @@ class BlaspService
                     foreach ($matches[0] as $match) {
                         // Get the start and length of the match
                         $start = $match[1];
-                        $length = strlen($match[0]);
+                        $length = mb_strlen($match[0], 'UTF-8');
+                        $matchedText = $match[0];
+
+                        // Check if the match inappropriately spans across word boundaries
+                        if ($this->isSpanningWordBoundary($matchedText)) {
+                            continue;  // Skip this match as it spans word boundaries
+                        }
 
                         // Use boundaries to extract the full word around the match
                         $fullWord = $this->getFullWordContext($normalizedString, $start, $length);
@@ -188,9 +197,18 @@ class BlaspService
                         $this->hasProfanity = true;
 
                         // Replace the found profanity
-                        $this->generateProfanityReplacement((array) $match);
+                        $length = mb_strlen($match[0], 'UTF-8');
+                        $replacement = str_repeat("*", $length);
+                        
+                        // Replace in working clean string
+                        $workingCleanString = mb_substr($workingCleanString, 0, $start) . $replacement .
+                            mb_substr($workingCleanString, $start + $length);
 
-                        $normalizedString = substr_replace($normalizedString, str_repeat('*', $length), $start, $length);
+                        // Replace in normalized string to keep tracking consistent  
+                        $normalizedString = substr_replace($normalizedString, str_repeat('*', strlen($match[0])), $start, strlen($match[0]));
+
+                        // Increment profanity count
+                        $this->profanitiesCount++;
 
                         // Avoid adding duplicates to the unique list using hash map for O(1) lookup
                         if (!isset($this->uniqueProfanitiesMap[$profanity])) {
@@ -202,27 +220,42 @@ class BlaspService
             }
         }
 
+        // Update the final clean string
+        $this->cleanString = $workingCleanString;
+
         return $this;
     }
 
     /**
-     * Mask the profanities found in the incoming string.
-     *
-     * @param array $match
-     * @return void
+     * Check if a match inappropriately spans across word boundaries.
+     * 
+     * @param string $matchedText The text that was matched by the regex
+     * @return bool
      */
-    private function generateProfanityReplacement(array $match): void
+    private function isSpanningWordBoundary(string $matchedText): bool
     {
-        $start = $match[1]; // Starting position of the profanity
-        $length = mb_strlen($match[0], 'UTF-8'); // Length of the profanity
-        $replacement = str_repeat("*", $length); // Mask with asterisks
-
-        // Replace only the profanity in the cleanString, preserving the original case and spaces
-        $this->cleanString = mb_substr($this->cleanString, 0, $start) . $replacement .
-            mb_substr($this->cleanString, $start + $length);
-
-        // Increment profanity count
-        $this->profanitiesCount++;
+        // If the match contains spaces, it might be spanning word boundaries
+        if (preg_match('/\s+/', $matchedText)) {
+            // Split by spaces to check the word structure
+            $parts = preg_split('/\s+/', $matchedText);
+            
+            // If we have multiple parts and the last part is just a single character,
+            // it's likely the beginning of the next word
+            if (count($parts) > 1) {
+                $lastPart = end($parts);
+                if (strlen($lastPart) === 1 && preg_match('/[a-z]/i', $lastPart)) {
+                    return true;  // Last part is single char - likely from next word
+                }
+                
+                // Also check if first part is single char (less common but possible)
+                $firstPart = $parts[0];
+                if (strlen($firstPart) === 1 && preg_match('/[a-z]/i', $firstPart)) {
+                    return true;  // First part is single char - likely from previous word
+                }
+            }
+        }
+        
+        return false;
     }
 
     /**

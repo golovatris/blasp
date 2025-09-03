@@ -281,4 +281,13 @@ class BlaspCheckTest extends TestCase
         $this->assertCount(4, $result->uniqueProfanitiesFound);
         $this->assertSame('abcd****efgh****ijklm******opqr********', $result->cleanString);
     }
+
+    public function test_multiple_profanities_with_spaces()
+    {
+        $result =  $this->blaspService->check('This is a fucking shit sentence');
+        $this->assertTrue($result->hasProfanity);
+        $this->assertSame(2, $result->profanitiesCount);
+        $this->assertCount(2, $result->uniqueProfanitiesFound);
+        $this->assertSame('This is a ******* **** sentence', $result->cleanString);
+    }
 }
