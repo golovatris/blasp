@@ -108,7 +108,7 @@ class AllLanguagesDetectionTest extends TestCase
                 'joder' => ['JODER', 'Joder', 'joder', 'JoDeR']
             ],
             'english' => [
-                'fuck' => ['FUCK', 'Fuck', 'fuck', 'FuCk', 'f*ck', 'f@ck'],
+                'fuck' => ['FUCK', 'Fuck', 'fuck', 'FuCk', 'f@ck', 'f*ck'],
                 'shit' => ['SHIT', 'Shit', 'shit', 'ShIt', 'sh1t', 'sh!t']
             ]
         ];
