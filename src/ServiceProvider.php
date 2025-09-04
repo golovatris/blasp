@@ -21,6 +21,18 @@ class ServiceProvider extends BaseServiceProvider
             $this->publishes([
                 __DIR__.'/../config/config.php' => config_path('blasp.php'),
             ], 'blasp-config');
+            
+            // Publish language files
+            $this->publishes([
+                __DIR__.'/../config/languages' => config_path('languages'),
+            ], 'blasp-languages');
+            
+            // Publish both config and languages together
+            $this->publishes([
+                __DIR__.'/../config/config.php' => config_path('blasp.php'),
+                __DIR__.'/../config/languages' => config_path('languages'),
+            ], 'blasp');
+            
             $this->commands([
                 Console\Commands\BlaspClearCommand::class,
             ]);
