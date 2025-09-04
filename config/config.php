@@ -13,16 +13,6 @@ return [
     */
     'default_language' => 'english',
 
-    /*
-    |--------------------------------------------------------------------------
-    | Merge Domain Strategies
-    |--------------------------------------------------------------------------
-    |
-    | When enabled, all domain-specific profanities (gaming, social media, 
-    | workplace) will be automatically included in default detection.
-    |
-    */
-    'merge_domain_strategies' => true,
 
     /*
     |--------------------------------------------------------------------------

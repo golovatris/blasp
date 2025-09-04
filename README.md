@@ -117,9 +117,9 @@ Blasp uses configuration files to manage profanities, separators, and substituti
 // config/blasp.php
 return [
     'default_language' => 'english',  // Default language for detection
-    'merge_domain_strategies' => true, // Include all domain strategies by default
     'separators' => [...],            // Special characters used as separators
     'substitutions' => [...],         // Character substitutions (like @ for a)
+    'false_positives' => [...],       // Words that should not be flagged
 ];
 ```
 
@@ -137,12 +137,8 @@ php artisan vendor:publish --tag="blasp-languages"
 ```
 
 This will publish:
-- `config/blasp.php` - Main configuration with default language, separators, and substitutions
-- `config/languages/` - Language-specific profanity lists:
-  - `english.php` - English profanities and false positives
-  - `spanish.php` - Spanish profanities and false positives
-  - `german.php` - German profanities and false positives  
-  - `french.php` - French profanities and false positives
+- `config/blasp.php` - Main configuration with default language settings
+- `config/languages/` - Language-specific profanity lists (English, Spanish, German, French)
 
 ### Custom Configuration
 
@@ -159,22 +155,6 @@ $blasp = Blasp::configure(
 
 This is particularly useful when you need different profanity rules for specific contexts, such as username validation.
 
-### Language-Specific Detection
-
-```php
-// Using the facade with method chaining (recommended)
-$result = Blasp::spanish()->check('texto con palabras malas');
-$result = Blasp::german()->check('text mit schlechten Wörtern');
-$result = Blasp::french()->check('texte avec des gros mots');
-
-// Check against ALL languages simultaneously
-$result = Blasp::allLanguages()->check('multilingual text with bad words in any language');
-
-// Using the service directly
-use Blaspsoft\Blasp\BlaspService;
-$service = new BlaspService();
-$result = $service->language('spanish')->check('texto con palabras malas');
-```
 
 ## 🚀 Advanced Features (v3.0+)
 
@@ -198,47 +178,13 @@ echo $result->getUniqueProfanitiesFound();  // ['fuck', 'merde', 'scheiße', 'mi
 
 ### Multi-Language Support
 
-Blasp includes comprehensive multi-language support with language-specific character normalization:
+Blasp includes comprehensive support for multiple languages with automatic character normalization:
 
-#### Built-in Languages
 - **English**: Full profanity database with common variations
-- **Spanish**: Includes accent normalization (á→a), ñ→n, ll→y, rr→r transformations
-- **German**: Handles umlauts (ä→ae, ö→oe, ü→ue), ß→ss, sch→sh transformations  
+- **Spanish**: Handles accent normalization (á→a, ñ→n)
+- **German**: Processes umlauts (ä→ae, ö→oe, ü→ue) and ß→ss
 - **French**: Accent and cedilla normalization
 
-#### Simple Language Switching
-
-```php
-// Quick language switching with facade
-Blasp::english()->check($text);
-Blasp::spanish()->check($text); 
-Blasp::german()->check($text);
-Blasp::french()->check($text);
-
-// Dynamic language selection
-$language = $request->get('language', 'english');
-Blasp::language($language)->check($text);
-
-// Check all languages at once
-Blasp::allLanguages()->check($text);
-```
-
-#### Language-Specific Normalizers
-
-Each language has its own normalizer to handle character variations:
-
-```php
-use Blaspsoft\Blasp\Normalizers\SpanishStringNormalizer;
-use Blaspsoft\Blasp\Normalizers\GermanStringNormalizer;
-
-// Spanish normalizer handles accents and special characters
-$spanishNormalizer = new SpanishStringNormalizer();
-$normalized = $spanishNormalizer->normalize('niño'); // Returns: 'nino'
-
-// German normalizer handles umlauts and compound letters
-$germanNormalizer = new GermanStringNormalizer();
-$normalized = $germanNormalizer->normalize('schöne'); // Returns: 'shoene'
-```
 
 ### Method Chaining API
 
@@ -261,25 +207,21 @@ Blasp::allLanguages()->lenient()->check($text);
 Blasp::french()->configure($profanities)->check($text);
 ```
 
-### Advanced Configuration
+### Laravel Integration
 
-#### Dependency Injection
 ```php
-// Inject custom components
-use Blaspsoft\Blasp\BlaspService;
-use Blaspsoft\Blasp\Config\ConfigurationLoader;
-
-$customLoader = new ConfigurationLoader($customExpressionGenerator);
-$blasp = new BlaspService(null, null, $customLoader);
-```
-
-#### Service Container Integration
-```php
-// Laravel service container automatically resolves dependencies
+// Laravel service container integration
 $blasp = app(BlaspService::class);
 
-// Or bind custom implementations
-app()->bind(ExpressionGeneratorInterface::class, CustomExpressionGenerator::class);
+// Validation rule with default language
+$request->validate([
+    'message' => 'required|blasp_check'
+]);
+
+// Validation rule with specific language
+$request->validate([
+    'message' => 'required|blasp_check:spanish'
+]);
 ```
 
 ### Cache Management
@@ -341,23 +283,17 @@ Blasp::french()->check($text);
 // NEW: Default language configuration
 // Set in config/blasp.php: 'default_language' => 'spanish'
 Blasp::check($text); // Now uses Spanish by default
-
-// NEW: Cleaner API - no need for strategy factories
-// Old way: StrategyFactory::createForContext(['domain' => 'gaming'])
-// New way: Just use Blasp::check() - domain strategies merged by default
 ```
 
 ## 🏗️ Architecture
 
 Blasp v3.0 follows SOLID principles and modern PHP practices:
 
-- **Strategy Pattern**: Pluggable detection strategies for different contexts
-- **Factory Pattern**: Strategy creation and management
-- **Dependency Injection**: Full Laravel service container integration  
-- **Registry Pattern**: Centralized strategy and normalizer management
-- **Observer Pattern**: Plugin system for extensibility
-- **Repository Pattern**: Configuration loading and caching
-- **Template Method Pattern**: Language-specific normalizers extending base functionality
+- **Facade Pattern**: Simplified API with Laravel facade integration
+- **Builder Pattern**: Method chaining for fluent interface
+- **Strategy Pattern**: Language-specific detection and normalization
+- **Dependency Injection**: Full Laravel service container integration
+- **Caching**: Intelligent performance optimization
 
 ## 📋 Requirements
 
