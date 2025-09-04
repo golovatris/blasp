@@ -39,9 +39,14 @@ class ServiceProvider extends BaseServiceProvider
         }
 
         app('validator')->extend('blasp_check', function($attribute, $value, $parameters, $validator) {
-            $language = $parameters[0] ?? null;
+            $language = $parameters[0] ?? config('blasp.default_language', 'english');
 
-            $blaspService = new BlaspService($language);
+            // Create service with default configuration and set language if specified  
+            $blaspService = app(BlaspService::class);
+            
+            if ($language !== config('blasp.default_language', 'english')) {
+                $blaspService = $blaspService->language($language);
+            }
 
             return !$blaspService->check($value)->hasProfanity();
         }, 'The :attribute contains profanity.');

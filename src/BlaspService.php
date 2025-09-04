@@ -58,7 +58,14 @@ class BlaspService
      *
      * @var string|null
      */
-    protected ?string $chosenLanguage;
+    protected ?string $chosenLanguage = null;
+
+    /**
+     * Detection mode configuration
+     *
+     * @var string
+     */
+    protected string $detectionMode = 'normal';
 
     /**
      * Detection configuration instance.
@@ -106,6 +113,11 @@ class BlaspService
         );
 
         $this->stringNormalizer = Normalize::getLanguageNormalizerInstance();
+        
+        // Set default language from config if not specified
+        if (!$this->chosenLanguage) {
+            $this->chosenLanguage = config('blasp.default_language', 'english');
+        }
     }
 
     /**
@@ -118,8 +130,116 @@ class BlaspService
     public function configure(?array $profanities = null, ?array $falsePositives = null): self
     {
         $blasp = new BlaspService($profanities, $falsePositives, $this->configurationLoader);
+        $blasp->chosenLanguage = $this->chosenLanguage;
+        $blasp->detectionMode = $this->detectionMode;
 
         return $blasp;
+    }
+
+    /**
+     * Set the language for profanity detection
+     *
+     * @param string $language
+     * @return self
+     */
+    public function language(string $language): self
+    {
+        $newInstance = clone $this;
+        $newInstance->chosenLanguage = $language;
+        
+        // Reload configuration for the new language
+        $newInstance->config = $newInstance->configurationLoader->load(null, null, $language);
+        $newInstance->profanityDetector = new ProfanityDetector(
+            $newInstance->config->getProfanityExpressions(),
+            $newInstance->config->getFalsePositives()
+        );
+        
+        return $newInstance;
+    }
+
+    /**
+     * Set strict detection mode
+     *
+     * @return self
+     */
+    public function strict(): self
+    {
+        $newInstance = clone $this;
+        $newInstance->detectionMode = 'strict';
+        return $newInstance;
+    }
+
+    /**
+     * Set lenient detection mode
+     *
+     * @return self
+     */
+    public function lenient(): self
+    {
+        $newInstance = clone $this;
+        $newInstance->detectionMode = 'lenient';
+        return $newInstance;
+    }
+
+    /**
+     * Set English language (shortcut method)
+     *
+     * @return self
+     */
+    public function english(): self
+    {
+        return $this->language('english');
+    }
+
+    /**
+     * Set Spanish language (shortcut method)
+     *
+     * @return self
+     */
+    public function spanish(): self
+    {
+        return $this->language('spanish');
+    }
+
+    /**
+     * Set German language (shortcut method)
+     *
+     * @return self
+     */
+    public function german(): self
+    {
+        return $this->language('german');
+    }
+
+    /**
+     * Set French language (shortcut method)
+     *
+     * @return self
+     */
+    public function french(): self
+    {
+        return $this->language('french');
+    }
+
+    /**
+     * Enable checking against all available languages
+     *
+     * @return self
+     */
+    public function allLanguages(): self
+    {
+        $newInstance = clone $this;
+        $newInstance->chosenLanguage = 'all';
+        
+        // Load multi-language configuration with all available languages
+        // Pass 'all' as the default language to trigger all-language mode
+        $newInstance->config = $newInstance->configurationLoader->loadMultiLanguage([], 'all');
+        $newInstance->profanityDetector = new ProfanityDetector(
+            $newInstance->config->getProfanityExpressions(),
+            $newInstance->config->getFalsePositives()
+        );
+        
+        return $newInstance;
     }
 
     /**

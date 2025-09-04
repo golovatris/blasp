@@ -73,11 +73,31 @@ class MultiLanguageDetectionConfig implements MultiLanguageConfigInterface
 
     public function getProfanities(): array
     {
+        // If current language is 'all', combine profanities from all languages
+        if ($this->currentLanguage === 'all') {
+            $allProfanities = [];
+            foreach ($this->languageData as $language => $data) {
+                $profanities = $data['profanities'] ?? [];
+                $allProfanities = array_merge($allProfanities, $profanities);
+            }
+            return array_unique($allProfanities);
+        }
+        
         return $this->getProfanitiesForLanguage($this->currentLanguage);
     }
 
     public function getFalsePositives(): array
     {
+        // If current language is 'all', combine false positives from all languages
+        if ($this->currentLanguage === 'all') {
+            $allFalsePositives = [];
+            foreach ($this->languageData as $language => $data) {
+                $falsePositives = $data['false_positives'] ?? [];
+                $allFalsePositives = array_merge($allFalsePositives, $falsePositives);
+            }
+            return array_unique($allFalsePositives);
+        }
+        
         return $this->getFalsePositivesForLanguage($this->currentLanguage);
     }
 
@@ -169,14 +189,30 @@ class MultiLanguageDetectionConfig implements MultiLanguageConfigInterface
 
     private function generateExpressions(): void
     {
-        $profanities = $this->getProfanities();
-        
-        if (!empty($profanities)) {
-            $this->profanityExpressions = $this->expressionGenerator->generateExpressions(
-                $profanities,
-                $this->separators,
-                $this->substitutions
-            );
+        // If current language is 'all', generate expressions for all languages
+        if ($this->currentLanguage === 'all') {
+            $this->profanityExpressions = [];
+            foreach ($this->languageData as $language => $data) {
+                $profanities = $data['profanities'] ?? [];
+                if (!empty($profanities)) {
+                    $expressions = $this->expressionGenerator->generateExpressions(
+                        $profanities,
+                        $this->separators,
+                        $this->substitutions
+                    );
+                    $this->profanityExpressions = array_merge($this->profanityExpressions, $expressions);
+                }
+            }
+        } else {
+            $profanities = $this->getProfanities();
+            
+            if (!empty($profanities)) {
+                $this->profanityExpressions = $this->expressionGenerator->generateExpressions(
+                    $profanities,
+                    $this->separators,
+                    $this->substitutions
+                );
+            }
         }
     }
 }

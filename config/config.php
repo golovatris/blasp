@@ -4,6 +4,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Default Language
+    |--------------------------------------------------------------------------
+    |
+    | The default language to use for profanity detection. Available languages
+    | are stored in the config/languages/ directory.
+    |
+    */
+    'default_language' => 'english',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Merge Domain Strategies
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, all domain-specific profanities (gaming, social media, 
+    | workplace) will be automatically included in default detection.
+    |
+    */
+    'merge_domain_strategies' => true,
+
+    /*
+    |--------------------------------------------------------------------------
     | Character separators
     |--------------------------------------------------------------------------
     |
