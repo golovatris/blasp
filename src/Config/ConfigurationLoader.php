@@ -31,20 +31,23 @@ class ConfigurationLoader
      *
      * @param array|null $customProfanities
      * @param array|null $customFalsePositives
+     * @param string|null $language
      * @return DetectionConfigInterface
      */
-    public function load(?array $customProfanities = null, ?array $customFalsePositives = null): DetectionConfigInterface
+    public function load(?array $customProfanities = null, ?array $customFalsePositives = null, ?string $language = null): DetectionConfigInterface
     {
-        // Try to load from English language file first, fall back to config if that fails
+        // Determine which language to load
+        $targetLanguage = $language ?? config('blasp.default_language', 'english');
+        
         $profanities = $customProfanities;
         $falsePositives = $customFalsePositives;
         
         if ($profanities === null) {
             try {
-                $englishData = $this->loadLanguage('english');
-                $profanities = $englishData['profanities'] ?? [];
+                $languageData = $this->loadLanguage($targetLanguage);
+                $profanities = $languageData['profanities'] ?? [];
                 if (empty($profanities)) {
-                    throw new \Exception('No profanities found in English language file');
+                    throw new \Exception("No profanities found in {$targetLanguage} language file");
                 }
             } catch (\Exception $e) {
                 // Fall back to config file
@@ -54,8 +57,8 @@ class ConfigurationLoader
         
         if ($falsePositives === null) {
             try {
-                $englishData = $this->loadLanguage('english');
-                $falsePositives = $englishData['false_positives'] ?? [];
+                $languageData = $this->loadLanguage($targetLanguage);
+                $falsePositives = $languageData['false_positives'] ?? [];
             } catch (\Exception $e) {
                 // Fall back to config file
                 $falsePositives = config('blasp.false_positives');

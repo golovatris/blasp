@@ -105,7 +105,13 @@ class BlaspService
         ?ConfigurationLoader $configurationLoader = null
     ) {
         $this->configurationLoader = $configurationLoader ?? new ConfigurationLoader();
-        $this->config = $this->configurationLoader->load($profanities, $falsePositives);
+        
+        // Set default language from config if not specified
+        if (!$this->chosenLanguage) {
+            $this->chosenLanguage = config('blasp.default_language', 'english');
+        }
+        
+        $this->config = $this->configurationLoader->load($profanities, $falsePositives, $this->chosenLanguage);
 
         $this->profanityDetector = new ProfanityDetector(
             $this->config->getProfanityExpressions(),
@@ -113,11 +119,6 @@ class BlaspService
         );
 
         $this->stringNormalizer = Normalize::getLanguageNormalizerInstance();
-        
-        // Set default language from config if not specified
-        if (!$this->chosenLanguage) {
-            $this->chosenLanguage = config('blasp.default_language', 'english');
-        }
     }
 
     /**
