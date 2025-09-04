@@ -9,8 +9,6 @@ use Blaspsoft\Blasp\BlaspService;
  * @method static \Blaspsoft\Blasp\BlaspService check(string $string)
  * @method static \Blaspsoft\Blasp\BlaspService configure(?array $profanities = null, ?array $falsePositives = null)
  * @method static \Blaspsoft\Blasp\BlaspService language(string $language)
- * @method static \Blaspsoft\Blasp\BlaspService strict()
- * @method static \Blaspsoft\Blasp\BlaspService lenient()
  * @method static \Blaspsoft\Blasp\BlaspService english()
  * @method static \Blaspsoft\Blasp\BlaspService spanish()
  * @method static \Blaspsoft\Blasp\BlaspService german()
@@ -52,26 +50,6 @@ class Blasp extends Facade
     public static function configure(?array $profanities = null, ?array $falsePositives = null): BlaspService
     {
         return static::getFacadeRoot()->configure($profanities, $falsePositives);
-    }
-
-    /**
-     * Set strict detection mode
-     *
-     * @return \Blaspsoft\Blasp\BlaspService
-     */
-    public static function strict(): BlaspService
-    {
-        return static::getFacadeRoot()->strict();
-    }
-
-    /**
-     * Set lenient detection mode
-     *
-     * @return \Blaspsoft\Blasp\BlaspService
-     */
-    public static function lenient(): BlaspService
-    {
-        return static::getFacadeRoot()->lenient();
     }
 
     /**

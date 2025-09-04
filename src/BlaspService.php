@@ -61,13 +61,6 @@ class BlaspService
     protected ?string $chosenLanguage = null;
 
     /**
-     * Detection mode configuration
-     *
-     * @var string
-     */
-    protected string $detectionMode = 'normal';
-
-    /**
      * Detection configuration instance.
      *
      * @var DetectionConfigInterface
@@ -132,7 +125,6 @@ class BlaspService
     {
         $blasp = new BlaspService($profanities, $falsePositives, $this->configurationLoader);
         $blasp->chosenLanguage = $this->chosenLanguage;
-        $blasp->detectionMode = $this->detectionMode;
 
         return $blasp;
     }
@@ -155,30 +147,6 @@ class BlaspService
             $newInstance->config->getFalsePositives()
         );
         
-        return $newInstance;
-    }
-
-    /**
-     * Set strict detection mode
-     *
-     * @return self
-     */
-    public function strict(): self
-    {
-        $newInstance = clone $this;
-        $newInstance->detectionMode = 'strict';
-        return $newInstance;
-    }
-
-    /**
-     * Set lenient detection mode
-     *
-     * @return self
-     */
-    public function lenient(): self
-    {
-        $newInstance = clone $this;
-        $newInstance->detectionMode = 'lenient';
         return $newInstance;
     }
 

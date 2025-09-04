@@ -14,7 +14,7 @@ Blasp is a powerful, extensible profanity filter package for Laravel that helps 
 
 ## ✨ Key Features
 
-- **🔗 Method Chaining**: Elegant fluent API with `Blasp::spanish()->strict()->check()`
+- **🔗 Method Chaining**: Elegant fluent API with `Blasp::spanish()->check()`
 - **🌍 Multi-Language Support**: English, Spanish, German, and French with language-specific normalizers
 - **🌐 All Languages Mode**: Check against all languages simultaneously with `Blasp::allLanguages()`
 - **⚡ High Performance**: Advanced caching with O(1) lookups and optimized algorithms
@@ -56,13 +56,9 @@ Blasp::spanish()->check($text);
 Blasp::german()->check($text);
 Blasp::french()->check($text);
 
-// Detection modes
-Blasp::strict()->check($text);   // Strict detection
-Blasp::lenient()->check($text);  // Lenient detection
-
 // Combine methods with chaining
-Blasp::spanish()->strict()->check($text);
-Blasp::allLanguages()->lenient()->check($text);
+Blasp::spanish()->check($text);
+Blasp::allLanguages()->check($text);
 
 // Configure custom profanities
 Blasp::configure(['badword'], ['goodword'])->check($text);
@@ -167,10 +163,6 @@ Perfect for international platforms, forums, or any application with multilingua
 $result = Blasp::allLanguages()->check('fuck merde scheiße mierda');
 // Detects profanities from English, French, German, and Spanish
 
-// Combine with detection modes
-$result = Blasp::allLanguages()->strict()->check($text);
-$result = Blasp::allLanguages()->lenient()->check($text);
-
 // Get detailed results
 echo $result->getProfanitiesCount();        // 4
 echo $result->getUniqueProfanitiesFound();  // ['fuck', 'merde', 'scheiße', 'mierda']
@@ -193,17 +185,15 @@ The new simplified API supports elegant method chaining:
 ```php
 // Chain multiple methods together
 Blasp::spanish()
-    ->strict()
     ->configure(['custom_bad_word'], ['false_positive'])
     ->check('texto para verificar');
 
 // All methods return a BlaspService instance for chaining
 $service = Blasp::english();          // Returns BlaspService
-$service = $service->strict();        // Returns BlaspService  
 $service = $service->check($text);    // Returns BlaspService with results
 
 // Mix and match as needed
-Blasp::allLanguages()->lenient()->check($text);
+Blasp::allLanguages()->check($text);
 Blasp::french()->configure($profanities)->check($text);
 ```
 
@@ -271,7 +261,7 @@ Take advantage of the simplified API:
 
 ```php
 // NEW: Method chaining
-Blasp::spanish()->strict()->check($text);
+Blasp::spanish()->check($text);
 
 // NEW: All languages detection
 Blasp::allLanguages()->check($text);

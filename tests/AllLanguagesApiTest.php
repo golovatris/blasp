@@ -41,12 +41,8 @@ class AllLanguagesApiTest extends TestCase
 
     public function test_chainable_all_languages()
     {
-        // Test with strict mode
-        $result = Blasp::allLanguages()->strict()->check('damn merde');
-        $this->assertTrue($result->hasProfanity());
-        
-        // Test with lenient mode
-        $result = Blasp::allLanguages()->lenient()->check('damn merde');
+        // Test all languages check
+        $result = Blasp::allLanguages()->check('damn merde');
         $this->assertTrue($result->hasProfanity());
     }
 
