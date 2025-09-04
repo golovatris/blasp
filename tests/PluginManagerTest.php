@@ -69,33 +69,33 @@ class PluginManagerTest extends TestCase
 
     public function test_get_applicable_strategies_filters_by_context()
     {
-        $gamingStrategy = $this->createMockStrategy('gaming', 120);
-        $gamingStrategy->method('canHandle')
+        $customStrategy = $this->createMockStrategy('custom', 120);
+        $customStrategy->method('canHandle')
             ->willReturnCallback(function ($text, $context) {
-                return isset($context['domain']) && $context['domain'] === 'gaming';
+                return isset($context['domain']) && $context['domain'] === 'custom';
             });
         
-        $this->pluginManager->registerStrategy($gamingStrategy);
+        $this->pluginManager->registerStrategy($customStrategy);
         
-        // Test with gaming context
-        $gamingApplicable = $this->pluginManager->getApplicableStrategies(
+        // Test with custom context
+        $customApplicable = $this->pluginManager->getApplicableStrategies(
             'test text',
-            ['domain' => 'gaming']
+            ['domain' => 'custom']
         );
         
-        $this->assertCount(2, $gamingApplicable); // gaming + default
-        $this->assertEquals('gaming', $gamingApplicable[0]->getName());
-        $this->assertEquals('default', $gamingApplicable[1]->getName());
+        $this->assertCount(2, $customApplicable); // custom + default
+        $this->assertEquals('custom', $customApplicable[0]->getName());
+        $this->assertEquals('default', $customApplicable[1]->getName());
         
-        // Test without gaming context
-        $nonGamingApplicable = $this->pluginManager->getApplicableStrategies(
+        // Test without custom context
+        $nonCustomApplicable = $this->pluginManager->getApplicableStrategies(
             'office meeting',
-            ['domain' => 'workplace']
+            ['domain' => 'other']
         );
         
         // Should have at least default
-        $nonGamingNames = array_map(fn($s) => $s->getName(), $nonGamingApplicable);
-        $this->assertContains('default', $nonGamingNames);
+        $nonCustomNames = array_map(fn($s) => $s->getName(), $nonCustomApplicable);
+        $this->assertContains('default', $nonCustomNames);
     }
 
     public function test_detect_profanities_combines_results_from_multiple_strategies()

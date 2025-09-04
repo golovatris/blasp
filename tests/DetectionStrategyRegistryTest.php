@@ -102,7 +102,7 @@ class DetectionStrategyRegistryTest extends TestCase
         $this->registry->register('can', $canHandle);
         $this->registry->register('cannot', $cannotHandle);
         
-        $applicable = $this->registry->getApplicableStrategies('test text', ['domain' => 'gaming']);
+        $applicable = $this->registry->getApplicableStrategies('test text', ['domain' => 'test']);
         
         $this->assertCount(1, $applicable);
         $this->assertSame($canHandle, $applicable[0]);

@@ -4,9 +4,6 @@ namespace Blaspsoft\Blasp\Tests;
 
 use Blaspsoft\Blasp\Factories\StrategyFactory;
 use Blaspsoft\Blasp\Strategies\DefaultDetectionStrategy;
-use Blaspsoft\Blasp\Strategies\GamingDetectionStrategy;
-use Blaspsoft\Blasp\Strategies\SocialMediaDetectionStrategy;
-use Blaspsoft\Blasp\Strategies\WorkplaceDetectionStrategy;
 use Blaspsoft\Blasp\Contracts\DetectionStrategyInterface;
 use InvalidArgumentException;
 
@@ -20,39 +17,16 @@ class StrategyFactoryTest extends TestCase
         $this->assertEquals('default', $strategy->getName());
     }
 
-    public function test_create_gaming_strategy()
-    {
-        $strategy = StrategyFactory::create('gaming');
-        
-        $this->assertInstanceOf(GamingDetectionStrategy::class, $strategy);
-        $this->assertEquals('gaming', $strategy->getName());
-    }
-
-    public function test_create_social_media_strategy()
-    {
-        $strategy = StrategyFactory::create('social_media');
-        
-        $this->assertInstanceOf(SocialMediaDetectionStrategy::class, $strategy);
-        $this->assertEquals('social_media', $strategy->getName());
-    }
-
-    public function test_create_workplace_strategy()
-    {
-        $strategy = StrategyFactory::create('workplace');
-        
-        $this->assertInstanceOf(WorkplaceDetectionStrategy::class, $strategy);
-        $this->assertEquals('workplace', $strategy->getName());
-    }
 
     public function test_create_is_case_insensitive()
     {
-        $strategy1 = StrategyFactory::create('GAMING');
-        $strategy2 = StrategyFactory::create('Gaming');
-        $strategy3 = StrategyFactory::create('gaming');
+        $strategy1 = StrategyFactory::create('DEFAULT');
+        $strategy2 = StrategyFactory::create('Default');
+        $strategy3 = StrategyFactory::create('default');
         
-        $this->assertInstanceOf(GamingDetectionStrategy::class, $strategy1);
-        $this->assertInstanceOf(GamingDetectionStrategy::class, $strategy2);
-        $this->assertInstanceOf(GamingDetectionStrategy::class, $strategy3);
+        $this->assertInstanceOf(DefaultDetectionStrategy::class, $strategy1);
+        $this->assertInstanceOf(DefaultDetectionStrategy::class, $strategy2);
+        $this->assertInstanceOf(DefaultDetectionStrategy::class, $strategy3);
     }
 
     public function test_create_throws_exception_for_unknown_strategy()
@@ -69,20 +43,15 @@ class StrategyFactoryTest extends TestCase
         
         $this->assertIsArray($strategies);
         $this->assertContains('default', $strategies);
-        $this->assertContains('gaming', $strategies);
-        $this->assertContains('social_media', $strategies);
-        $this->assertContains('workplace', $strategies);
-        $this->assertCount(4, $strategies);
+        $this->assertCount(1, $strategies);
     }
 
     public function test_create_multiple_strategies()
     {
-        $strategies = StrategyFactory::createMultiple(['default', 'gaming', 'workplace']);
+        $strategies = StrategyFactory::createMultiple(['default']);
         
-        $this->assertCount(3, $strategies);
+        $this->assertCount(1, $strategies);
         $this->assertInstanceOf(DefaultDetectionStrategy::class, $strategies[0]);
-        $this->assertInstanceOf(GamingDetectionStrategy::class, $strategies[1]);
-        $this->assertInstanceOf(WorkplaceDetectionStrategy::class, $strategies[2]);
     }
 
     public function test_create_multiple_throws_exception_for_unknown_strategy()
@@ -126,66 +95,20 @@ class StrategyFactoryTest extends TestCase
         StrategyFactory::registerStrategy('invalid', \stdClass::class);
     }
 
-    public function test_create_for_gaming_context()
+    public function test_create_for_context_returns_default()
     {
-        $strategies = StrategyFactory::createForContext(['domain' => 'gaming']);
+        // Test various contexts - all should return only default now
+        $strategies1 = StrategyFactory::createForContext(['domain' => 'gaming']);
+        $strategies2 = StrategyFactory::createForContext(['platform' => 'twitter']);
+        $strategies3 = StrategyFactory::createForContext(['environment' => 'workplace']);
         
-        $this->assertCount(2, $strategies);
+        $this->assertCount(1, $strategies1);
+        $this->assertCount(1, $strategies2);
+        $this->assertCount(1, $strategies3);
         
-        $strategyNames = array_map(fn($s) => $s->getName(), $strategies);
-        $this->assertContains('default', $strategyNames);
-        $this->assertContains('gaming', $strategyNames);
-    }
-
-    public function test_create_for_social_media_context()
-    {
-        $strategies = StrategyFactory::createForContext(['platform' => 'twitter']);
-        
-        $this->assertCount(2, $strategies);
-        
-        $strategyNames = array_map(fn($s) => $s->getName(), $strategies);
-        $this->assertContains('default', $strategyNames);
-        $this->assertContains('social_media', $strategyNames);
-    }
-
-    public function test_create_for_workplace_context()
-    {
-        $strategies = StrategyFactory::createForContext(['environment' => 'workplace']);
-        
-        $this->assertCount(2, $strategies);
-        
-        $strategyNames = array_map(fn($s) => $s->getName(), $strategies);
-        $this->assertContains('default', $strategyNames);
-        $this->assertContains('workplace', $strategyNames);
-    }
-
-    public function test_create_for_multiple_contexts()
-    {
-        $strategies = StrategyFactory::createForContext([
-            'domain' => 'gaming',
-            'platform' => 'twitter'
-        ]);
-        
-        $this->assertCount(3, $strategies);
-        
-        $strategyNames = array_map(fn($s) => $s->getName(), $strategies);
-        $this->assertContains('default', $strategyNames);
-        $this->assertContains('gaming', $strategyNames);
-        $this->assertContains('social_media', $strategyNames);
-    }
-
-    public function test_create_for_context_removes_duplicates()
-    {
-        $strategies = StrategyFactory::createForContext([
-            'platform' => 'facebook', // Should create social_media
-            'tags' => ['social_media'] // Also creates social_media (but shouldn't duplicate)
-        ]);
-        
-        // Should have default + social_media (no duplicates)
-        $strategyNames = array_map(fn($s) => $s->getName(), $strategies);
-        $uniqueNames = array_unique($strategyNames);
-        
-        $this->assertEquals(count($strategyNames), count($uniqueNames));
+        $this->assertEquals('default', $strategies1[0]->getName());
+        $this->assertEquals('default', $strategies2[0]->getName());
+        $this->assertEquals('default', $strategies3[0]->getName());
     }
 
     public function test_create_for_unknown_context_returns_only_default()

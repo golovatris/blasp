@@ -4,9 +4,6 @@ namespace Blaspsoft\Blasp\Factories;
 
 use Blaspsoft\Blasp\Contracts\DetectionStrategyInterface;
 use Blaspsoft\Blasp\Strategies\DefaultDetectionStrategy;
-use Blaspsoft\Blasp\Strategies\GamingDetectionStrategy;
-use Blaspsoft\Blasp\Strategies\SocialMediaDetectionStrategy;
-use Blaspsoft\Blasp\Strategies\WorkplaceDetectionStrategy;
 use InvalidArgumentException;
 
 /**
@@ -23,9 +20,6 @@ class StrategyFactory
 {
     private static array $availableStrategies = [
         'default' => DefaultDetectionStrategy::class,
-        'gaming' => GamingDetectionStrategy::class,
-        'social_media' => SocialMediaDetectionStrategy::class,
-        'workplace' => WorkplaceDetectionStrategy::class,
     ];
 
     /**
@@ -103,34 +97,8 @@ class StrategyFactory
      */
     public static function createForContext(array $context): array
     {
-        $strategies = [self::create('default')]; // Always include default
-
-        // Gaming context
-        if (isset($context['domain']) && $context['domain'] === 'gaming') {
-            $strategies[] = self::create('gaming');
-        }
-
-        // Social media context
-        if (isset($context['platform']) && in_array($context['platform'], ['twitter', 'facebook', 'instagram', 'tiktok'])) {
-            $strategies[] = self::create('social_media');
-        }
-
-        // Workplace context
-        if (isset($context['environment']) && $context['environment'] === 'workplace') {
-            $strategies[] = self::create('workplace');
-        }
-
-        // Remove duplicates based on strategy name
-        $uniqueStrategies = [];
-        $strategyNames = [];
-        
-        foreach ($strategies as $strategy) {
-            if (!in_array($strategy->getName(), $strategyNames)) {
-                $uniqueStrategies[] = $strategy;
-                $strategyNames[] = $strategy->getName();
-            }
-        }
-
-        return $uniqueStrategies;
+        // For now, just return the default strategy
+        // Context parameter kept for backwards compatibility
+        return [self::create('default')];
     }
 }
