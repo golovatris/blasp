@@ -95,15 +95,28 @@ $validated = $request->validate([
 
 ### Configuration
 
-Blasp uses configuration files to manage profanities, separators, and substitutions. Language-specific profanities are now stored in separate files in the `config/languages/` directory. You can publish the configuration file using the following Artisan command:
+Blasp uses configuration files to manage profanities, separators, and substitutions. Language-specific profanities are now stored in separate files in the `config/languages/` directory.
+
+You can publish the configuration files using the following Artisan commands:
 
 ```bash
+# Publish everything (config + all language files)
+php artisan vendor:publish --tag="blasp"
+
+# Publish only the main configuration file
 php artisan vendor:publish --tag="blasp-config"
+
+# Publish only the language files
+php artisan vendor:publish --tag="blasp-languages"
 ```
 
 This will publish:
-- `config/blasp.php` - Main configuration file
-- `config/languages/` - Directory containing language-specific profanity lists
+- `config/blasp.php` - Main configuration file with separators and substitutions
+- `config/languages/` - Directory containing language-specific profanity lists:
+  - `config/languages/english.php` - English profanities and false positives
+  - `config/languages/spanish.php` - Spanish profanities and false positives
+  - `config/languages/german.php` - German profanities and false positives
+  - `config/languages/french.php` - French profanities and false positives
 
 ### Custom Configuration
 
