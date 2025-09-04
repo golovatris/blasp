@@ -10,17 +10,17 @@
 
 # Blasp - Advanced Profanity Filter for Laravel
 
-Blasp is a powerful, extensible profanity filter package for Laravel that helps detect and mask profane words in text. Version 3.0 introduces a complete architectural overhaul with plugin system, comprehensive multi-language support (English, Spanish, German, French), domain-specific detection strategies, and advanced caching for enterprise-grade performance.
+Blasp is a powerful, extensible profanity filter package for Laravel that helps detect and mask profane words in text. Version 3.0 introduces a simplified API with method chaining, comprehensive multi-language support (English, Spanish, German, French), all-languages detection mode, and advanced caching for enterprise-grade performance.
 
 ## ✨ Key Features
 
-- **🔌 Plugin System**: Extensible detection strategies for different contexts
-- **🌍 Multi-Language Support**: Built-in support for English, Spanish, German, and French with language-specific normalizers
-- **🎯 Domain-Specific Detection**: Specialized strategies for gaming, social media, and workplace contexts
+- **🔗 Method Chaining**: Elegant fluent API with `Blasp::spanish()->strict()->check()`
+- **🌍 Multi-Language Support**: English, Spanish, German, and French with language-specific normalizers
+- **🌐 All Languages Mode**: Check against all languages simultaneously with `Blasp::allLanguages()`
 - **⚡ High Performance**: Advanced caching with O(1) lookups and optimized algorithms
+- **🎯 Smart Detection**: Handles substitutions, separators, variations, and false positives
 - **🏗️ Modern Architecture**: Built on SOLID principles with dependency injection
-- **📊 Comprehensive Detection**: Handles substitutions, separators, variations, and false positives
-- **✅ Battle Tested**: 133 tests with 548 assertions ensuring reliability
+- **✅ Battle Tested**: 184 tests with 1000+ assertions ensuring reliability
 
 ## Installation
 
@@ -30,38 +30,54 @@ You can install the package via Composer:
 composer require blaspsoft/blasp
 ```
 
-## Usage
+## Quick Start
 
 ### Basic Usage
-
-To use the profanity filter, simply call the `Blasp::check()` method with the sentence you want to check for profanity.
 
 ```php
 use Blaspsoft\Blasp\Facades\Blasp;
 
-$sentence = 'This is a fucking shit sentence';
-$check = Blasp::check($sentence);
+// Simple usage - uses default language from config
+$result = Blasp::check('This is a fucking shit sentence');
+
+// With method chaining for specific language
+$result = Blasp::spanish()->check('esto es una mierda');
+
+// Check against ALL languages at once
+$result = Blasp::allLanguages()->check('fuck merde scheiße mierda');
 ```
 
-The returned object will contain the following properties:
-
-- **sourceString**: The original string you passed.
-- **cleanString**: The string with profanities masked (e.g., replaced with `*`).
-- **hasProfanity**: A boolean indicating whether the string contains profanity.
-- **profanitiesCount**: The number of profanities found.
-- **uniqueProfanitiesFound**: An array of unique profanities found in the string.
-
-### Example
+### Simplified API with Method Chaining
 
 ```php
-$sentence = 'This is a fucking shit sentence';
-$blasp = Blasp::check($sentence);
+// Language shortcuts
+Blasp::english()->check($text);
+Blasp::spanish()->check($text);
+Blasp::german()->check($text);
+Blasp::french()->check($text);
 
-$blasp->getSourceString();       // "This is a fucking shit sentence"
-$blasp->getCleanString();        // "This is a ******* **** sentence"
-$blasp->hasProfanity();       // true
-$blasp->getProfanitiesCount();   // 2
-$blasp->getUniqueProfanitiesFound(); // ['fucking', 'shit']
+// Detection modes
+Blasp::strict()->check($text);   // Strict detection
+Blasp::lenient()->check($text);  // Lenient detection
+
+// Combine methods with chaining
+Blasp::spanish()->strict()->check($text);
+Blasp::allLanguages()->lenient()->check($text);
+
+// Configure custom profanities
+Blasp::configure(['badword'], ['goodword'])->check($text);
+```
+
+### Working with Results
+
+```php
+$result = Blasp::check('This is fucking awesome');
+
+$result->getSourceString();           // "This is fucking awesome"
+$result->getCleanString();            // "This is ******* awesome"
+$result->hasProfanity();             // true
+$result->getProfanitiesCount();      // 1
+$result->getUniqueProfanitiesFound(); // ['fucking']
 ```
 
 ### Profanity Detection Types
@@ -95,9 +111,19 @@ $validated = $request->validate([
 
 ### Configuration
 
-Blasp uses configuration files to manage profanities, separators, and substitutions. Language-specific profanities are now stored in separate files in the `config/languages/` directory.
+Blasp uses configuration files to manage profanities, separators, and substitutions. The main configuration includes:
 
-You can publish the configuration files using the following Artisan commands:
+```php
+// config/blasp.php
+return [
+    'default_language' => 'english',  // Default language for detection
+    'merge_domain_strategies' => true, // Include all domain strategies by default
+    'separators' => [...],            // Special characters used as separators
+    'substitutions' => [...],         // Character substitutions (like @ for a)
+];
+```
+
+You can publish the configuration files:
 
 ```bash
 # Publish everything (config + all language files)
@@ -111,12 +137,12 @@ php artisan vendor:publish --tag="blasp-languages"
 ```
 
 This will publish:
-- `config/blasp.php` - Main configuration file with separators and substitutions
-- `config/languages/` - Directory containing language-specific profanity lists:
-  - `config/languages/english.php` - English profanities and false positives
-  - `config/languages/spanish.php` - Spanish profanities and false positives
-  - `config/languages/german.php` - German profanities and false positives
-  - `config/languages/french.php` - French profanities and false positives
+- `config/blasp.php` - Main configuration with default language, separators, and substitutions
+- `config/languages/` - Language-specific profanity lists:
+  - `english.php` - English profanities and false positives
+  - `spanish.php` - Spanish profanities and false positives
+  - `german.php` - German profanities and false positives  
+  - `french.php` - French profanities and false positives
 
 ### Custom Configuration
 
@@ -136,56 +162,39 @@ This is particularly useful when you need different profanity rules for specific
 ### Language-Specific Detection
 
 ```php
+// Using the facade with method chaining (recommended)
+$result = Blasp::spanish()->check('texto con palabras malas');
+$result = Blasp::german()->check('text mit schlechten Wörtern');
+$result = Blasp::french()->check('texte avec des gros mots');
+
+// Check against ALL languages simultaneously
+$result = Blasp::allLanguages()->check('multilingual text with bad words in any language');
+
+// Using the service directly
 use Blaspsoft\Blasp\BlaspService;
-
-// Create a service for Spanish profanity detection
-$spanishBlasp = new BlaspService('spanish');
-$result = $spanishBlasp->check('texto con palabras malas');
-
-// Or use the default service which loads English by default
-$blasp = new BlaspService();
-$result = $blasp->check('text with bad words');
+$service = new BlaspService();
+$result = $service->language('spanish')->check('texto con palabras malas');
 ```
 
 ## 🚀 Advanced Features (v3.0+)
 
-### Domain-Specific Detection Strategies
+### All Languages Detection
 
-Blasp v3.0 introduces context-aware detection strategies that adapt to different environments:
+Perfect for international platforms, forums, or any application with multilingual content:
 
-#### Gaming Context
 ```php
-use Blaspsoft\Blasp\Factories\StrategyFactory;
+// Check text against ALL configured languages at once
+$result = Blasp::allLanguages()->check('fuck merde scheiße mierda');
+// Detects profanities from English, French, German, and Spanish
 
-// Create strategies for gaming context
-$strategies = StrategyFactory::createForContext(['domain' => 'gaming']);
+// Combine with detection modes
+$result = Blasp::allLanguages()->strict()->check($text);
+$result = Blasp::allLanguages()->lenient()->check($text);
 
-// Or manually create gaming strategy
-$gamingStrategy = StrategyFactory::create('gaming');
+// Get detailed results
+echo $result->getProfanitiesCount();        // 4
+echo $result->getUniqueProfanitiesFound();  // ['fuck', 'merde', 'scheiße', 'mierda']
 ```
-
-The gaming strategy detects gaming-specific profanities like "noob", "scrub", "rekt", "trash", "git gud", and "ez".
-
-#### Social Media Context
-```php
-// Detect social media toxicity
-$strategies = StrategyFactory::createForContext(['platform' => 'twitter']);
-
-// Handles hashtags, mentions, and social media slang
-$socialStrategy = StrategyFactory::create('social_media');
-```
-
-Detects social media profanities including "toxic", "cancel", "simp", "karen", and hashtag-based toxicity.
-
-#### Workplace Context  
-```php
-// Professional environment detection
-$strategies = StrategyFactory::createForContext(['environment' => 'workplace']);
-
-$workplaceStrategy = StrategyFactory::create('workplace');
-```
-
-Identifies inappropriate workplace language like "incompetent", "useless", "pathetic", and unprofessional phrases.
 
 ### Multi-Language Support
 
@@ -197,34 +206,21 @@ Blasp includes comprehensive multi-language support with language-specific chara
 - **German**: Handles umlauts (ä→ae, ö→oe, ü→ue), ß→ss, sch→sh transformations  
 - **French**: Accent and cedilla normalization
 
-#### Using Multi-Language Detection
+#### Simple Language Switching
 
 ```php
-use Blaspsoft\Blasp\Config\ConfigurationLoader;
+// Quick language switching with facade
+Blasp::english()->check($text);
+Blasp::spanish()->check($text); 
+Blasp::german()->check($text);
+Blasp::french()->check($text);
 
-$loader = new ConfigurationLoader();
+// Dynamic language selection
+$language = $request->get('language', 'english');
+Blasp::language($language)->check($text);
 
-// Load multiple languages
-$config = $loader->loadMultiLanguage(['english', 'spanish', 'german']);
-
-// Or load from custom language files
-$config = $loader->loadMultiLanguage([
-    'english' => [
-        'profanities' => ['bad', 'evil', 'wrong'],
-        'false_positives' => ['class', 'pass']
-    ],
-    'spanish' => [
-        'profanities' => ['malo', 'malvado'],
-        'false_positives' => ['clase']
-    ]
-], 'english');
-
-// Get available languages
-$languages = $loader->getAvailableLanguages(); // ['english', 'spanish', 'german', 'french']
-
-// Switch languages dynamically
-$config->setLanguage('spanish');
-$spanishProfanities = $config->getProfanities();
+// Check all languages at once
+Blasp::allLanguages()->check($text);
 ```
 
 #### Language-Specific Normalizers
@@ -244,59 +240,25 @@ $germanNormalizer = new GermanStringNormalizer();
 $normalized = $germanNormalizer->normalize('schöne'); // Returns: 'shoene'
 ```
 
-### Plugin System
+### Method Chaining API
 
-Create custom detection strategies by extending the base strategy:
-
-```php
-use Blaspsoft\Blasp\Abstracts\BaseDetectionStrategy;
-
-class CustomDetectionStrategy extends BaseDetectionStrategy
-{
-    public function getName(): string
-    {
-        return 'custom';
-    }
-
-    public function getPriority(): int
-    {
-        return 150; // Higher priority = runs first
-    }
-
-    public function detect(string $text, array $profanityExpressions, array $falsePositives): array
-    {
-        // Custom detection logic
-        return $matches;
-    }
-
-    public function canHandle(string $text, array $context = []): bool
-    {
-        // Return true if this strategy should process the text
-        return isset($context['custom_context']);
-    }
-}
-
-// Register your custom strategy
-use Blaspsoft\Blasp\Factories\StrategyFactory;
-StrategyFactory::registerStrategy('custom', CustomDetectionStrategy::class);
-```
-
-### Using the Plugin Manager
+The new simplified API supports elegant method chaining:
 
 ```php
-use Blaspsoft\Blasp\Plugins\PluginManager;
+// Chain multiple methods together
+Blasp::spanish()
+    ->strict()
+    ->configure(['custom_bad_word'], ['false_positive'])
+    ->check('texto para verificar');
 
-$pluginManager = new PluginManager();
+// All methods return a BlaspService instance for chaining
+$service = Blasp::english();          // Returns BlaspService
+$service = $service->strict();        // Returns BlaspService  
+$service = $service->check($text);    // Returns BlaspService with results
 
-// Register multiple strategies
-$pluginManager->registerStrategy(new CustomDetectionStrategy());
-
-// Detect using all applicable strategies
-$results = $pluginManager->detectProfanities(
-    'text to check',
-    $profanityExpressions,
-    $falsePositives
-);
+// Mix and match as needed
+Blasp::allLanguages()->lenient()->check($text);
+Blasp::french()->configure($profanities)->check($text);
 ```
 
 ### Advanced Configuration
@@ -349,46 +311,40 @@ Version 3.0 shows substantial performance improvements over v2:
 
 ## 🔄 Migration from v2.x to v3.0
 
-### Breaking Changes
+### 100% Backward Compatible
 
-1. **Architecture**: Complete refactor from inheritance to composition-based design
-2. **Namespace Changes**: Some internal classes moved to new namespaces
-3. **Constructor Changes**: BlaspService constructor now accepts optional ConfigurationLoader
-4. **Configuration Structure**: Language-specific profanities moved to `config/languages/` directory
-
-### Migration Steps
-
-Most existing code will work without changes. The public API remains backward compatible:
+All existing v2.x code continues to work without any changes:
 
 ```php
-// v2.x code continues to work
+// Existing code works exactly the same
 use Blaspsoft\Blasp\Facades\Blasp;
 
 $result = Blasp::check('text to check');
 $result = Blasp::configure($profanities, $falsePositives)->check('text');
 ```
 
-### New Recommended Usage
+### New Features in v3.0
 
-Take advantage of new features:
+Take advantage of the simplified API:
 
 ```php
-// Use context-aware detection
-$strategies = StrategyFactory::createForContext(['platform' => 'twitter']);
+// NEW: Method chaining
+Blasp::spanish()->strict()->check($text);
 
-// Use multi-language support
-$loader = new ConfigurationLoader();
-$config = $loader->loadMultiLanguage(['english', 'spanish', 'german']);
+// NEW: All languages detection
+Blasp::allLanguages()->check($text);
 
-// Use dependency injection
-$blasp = app(BlaspService::class);
+// NEW: Language shortcuts
+Blasp::german()->check($text);
+Blasp::french()->check($text);
 
-// Extend with custom strategies
-StrategyFactory::registerStrategy('custom', CustomStrategy::class);
+// NEW: Default language configuration
+// Set in config/blasp.php: 'default_language' => 'spanish'
+Blasp::check($text); // Now uses Spanish by default
 
-// Register custom language normalizers
-use Blaspsoft\Blasp\Normalizers\Normalize;
-Normalize::register('japanese', JapaneseNormalizer::class);
+// NEW: Cleaner API - no need for strategy factories
+// Old way: StrategyFactory::createForContext(['domain' => 'gaming'])
+// New way: Just use Blasp::check() - domain strategies merged by default
 ```
 
 ## 🏗️ Architecture
