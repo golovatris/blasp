@@ -19,11 +19,27 @@ class ProfanityDetector
      */
     protected array $falsePositives;
 
+    /**
+     * Cached sorted profanity expressions to avoid repeated sorting
+     *
+     * @var array|null
+     */
+    protected ?array $sortedProfanityExpressions = null;
+
+    /**
+     * Hash map of false positives for O(1) lookup performance
+     *
+     * @var array
+     */
+    protected array $falsePositivesMap;
+
     public function __construct(array $profanityExpressions, array $falsePositives)
     {
         $this->profanityExpressions = $profanityExpressions;
-
         $this->falsePositives = $falsePositives;
+        
+        // Pre-compute false positives hash map for faster lookups
+        $this->falsePositivesMap = array_flip(array_map('strtolower', $falsePositives));
     }
 
     /**
@@ -34,11 +50,15 @@ class ProfanityDetector
      */
     public function getProfanityExpressions(): array
     {
-        uksort($this->profanityExpressions, function($a, $b) {
-            return strlen($b) - strlen($a);  // Sort by length, descending
-        });
+        // Use cached sorted expressions to avoid repeated sorting
+        if ($this->sortedProfanityExpressions === null) {
+            $this->sortedProfanityExpressions = $this->profanityExpressions;
+            uksort($this->sortedProfanityExpressions, function($a, $b) {
+                return strlen($b) - strlen($a);  // Sort by length, descending
+            });
+        }
 
-        return $this->profanityExpressions;
+        return $this->sortedProfanityExpressions;
     }
 
     /**
@@ -49,6 +69,7 @@ class ProfanityDetector
      */
     public function isFalsePositive(string $word): bool
     {
-        return in_array(strtolower($word), $this->falsePositives, true);
+        // Use hash map for O(1) lookup instead of O(n) in_array
+        return isset($this->falsePositivesMap[strtolower($word)]);
     }
 }

@@ -4,6 +4,7 @@ namespace Blaspsoft\Blasp\Console\Commands;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Console\Command;
+use Blaspsoft\Blasp\Config\ConfigurationLoader;
 
 class BlaspClearCommand extends Command
 {
@@ -26,14 +27,7 @@ class BlaspClearCommand extends Command
      */
     public function handle(): void
     {
-        // Clear all cache keys that start with blasp_
-        $keys = Cache::get('blasp_cache_keys', []);
-        
-        foreach ($keys as $key) {
-            Cache::forget($key);
-        }
-        
-        Cache::forget('blasp_cache_keys');
+        ConfigurationLoader::clearCache();
         
         $this->info('Blasp cache cleared successfully!');
     }

@@ -19,10 +19,12 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Config::set('blasp.profanities', config('blasp.profanities'));
-        Config::set('blasp.false_positives', config('blasp.false_positives'));
-        Config::set('blasp.languages', config('blasp.languages'));
+        // Set up basic configuration - language-specific data will be loaded by ConfigurationLoader
         Config::set('blasp.separators', config('blasp.separators'));
-        Config::set('blasp.substitutions', config('blasp.substitutions'));
+        Config::set('blasp.profanities', config('blasp.profanities')); // Minimal set for backward compatibility
+        Config::set('blasp.false_positives', config('blasp.false_positives', []));
+        Config::set('blasp.languages', config('blasp.languages', []));
+        Config::set('blasp.substitutions', config('blasp.substitutions', []));
+        Config::set('blasp.mask_character', '*'); // Default mask character
     }
 }

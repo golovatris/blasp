@@ -5,8 +5,10 @@ namespace Blaspsoft\Blasp;
 use Exception;
 use Blaspsoft\Blasp\Normalizers\Normalize;
 use Blaspsoft\Blasp\Abstracts\StringNormalizer;
+use Blaspsoft\Blasp\Contracts\DetectionConfigInterface;
+use Blaspsoft\Blasp\Config\ConfigurationLoader;
 
-class BlaspService extends BlaspExpressionService
+class BlaspService
 {
     /**
      * The incoming string to check for profanities.
@@ -44,13 +46,33 @@ class BlaspService extends BlaspExpressionService
      */
     public array $uniqueProfanitiesFound = [];
 
+    /**
+     * Hash map for O(1) unique profanity tracking.
+     *
+     * @var array
+     */
+    private array $uniqueProfanitiesMap = [];
 
     /**
      * Language the package should use
      *
      * @var string|null
      */
-    protected ?string $chosenLanguage;
+    protected ?string $chosenLanguage = null;
+
+    /**
+     * Detection configuration instance.
+     *
+     * @var DetectionConfigInterface
+     */
+    private DetectionConfigInterface $config;
+
+    /**
+     * Configuration loader instance.
+     *
+     * @var ConfigurationLoader
+     */
+    private ConfigurationLoader $configurationLoader;
 
     /**
      * Profanity detector instance.
@@ -67,16 +89,36 @@ class BlaspService extends BlaspExpressionService
     private StringNormalizer $stringNormalizer;
 
     /**
-     * Initialise the class and parent class.
+     * Custom mask character to use for censoring.
+     *
+     * @var string|null
+     */
+    protected ?string $customMaskCharacter = null;
+
+    /**
+     * Initialise the class.
      *
      */
-    public function __construct(?array $profanities = null, ?array $falsePositives = null)
-    {
-        parent::__construct($profanities, $falsePositives);
+    public function __construct(
+        ?array $profanities = null,
+        ?array $falsePositives = null,
+        ?ConfigurationLoader $configurationLoader = null
+    ) {
+        $this->configurationLoader = $configurationLoader ?? new ConfigurationLoader();
+        
+        // Set default language from config if not specified
+        if (!$this->chosenLanguage) {
+            $this->chosenLanguage = config('blasp.default_language', 'english');
+        }
+        
+        $this->config = $this->configurationLoader->load($profanities, $falsePositives, $this->chosenLanguage);
 
-        $this->profanityDetector = new ProfanityDetector($this->profanityExpressions, $this->falsePositives);
+        $this->profanityDetector = new ProfanityDetector(
+            $this->config->getProfanityExpressions(),
+            $this->config->getFalsePositives()
+        );
 
-        $this->stringNormalizer =  Normalize::getLanguageNormalizerInstance();
+        $this->stringNormalizer = Normalize::getLanguageNormalizerInstance();
     }
 
     /**
@@ -88,9 +130,119 @@ class BlaspService extends BlaspExpressionService
      */
     public function configure(?array $profanities = null, ?array $falsePositives = null): self
     {
-        $blasp = new BlaspService($profanities, $falsePositives);
+        $newInstance = clone $this;
+        $newInstance->config = $newInstance->configurationLoader->load($profanities, $falsePositives, $newInstance->chosenLanguage);
+        $newInstance->profanityDetector = new ProfanityDetector(
+            $newInstance->config->getProfanityExpressions(),
+            $newInstance->config->getFalsePositives()
+        );
 
-        return $blasp;
+        return $newInstance;
+    }
+
+    /**
+     * Set the language for profanity detection
+     *
+     * @param string $language
+     * @return self
+     * @throws \InvalidArgumentException
+     */
+    public function language(string $language): self
+    {
+        $newInstance = clone $this;
+        $newInstance->chosenLanguage = $language;
+        
+        try {
+            // Reload configuration for the new language
+            $newInstance->config = $newInstance->configurationLoader->load(null, null, $language);
+            $newInstance->profanityDetector = new ProfanityDetector(
+                $newInstance->config->getProfanityExpressions(),
+                $newInstance->config->getFalsePositives()
+            );
+        } catch (\Exception $e) {
+            throw new \InvalidArgumentException("Failed to load language '{$language}': " . $e->getMessage());
+        }
+        
+        return $newInstance;
+    }
+
+    /**
+     * Set English language (shortcut method)
+     *
+     * @return self
+     */
+    public function english(): self
+    {
+        return $this->language('english');
+    }
+
+    /**
+     * Set Spanish language (shortcut method)
+     *
+     * @return self
+     */
+    public function spanish(): self
+    {
+        return $this->language('spanish');
+    }
+
+    /**
+     * Set German language (shortcut method)
+     *
+     * @return self
+     */
+    public function german(): self
+    {
+        return $this->language('german');
+    }
+
+    /**
+     * Set French language (shortcut method)
+     *
+     * @return self
+     */
+    public function french(): self
+    {
+        return $this->language('french');
+    }
+
+    /**
+     * Set custom mask character for censoring profanities
+     *
+     * @param string $character
+     * @return self
+     * @throws \InvalidArgumentException
+     */
+    public function maskWith(string $character): self
+    {
+        if (empty($character)) {
+            throw new \InvalidArgumentException('Mask character cannot be empty');
+        }
+        
+        $newInstance = clone $this;
+        $newInstance->customMaskCharacter = mb_substr($character, 0, 1); // Ensure single character
+        return $newInstance;
+    }
+
+    /**
+     * Enable checking against all available languages
+     *
+     * @return self
+     */
+    public function allLanguages(): self
+    {
+        $newInstance = clone $this;
+        $newInstance->chosenLanguage = 'all';
+        
+        // Load multi-language configuration with all available languages
+        // Pass 'all' as the default language to trigger all-language mode
+        $newInstance->config = $newInstance->configurationLoader->loadMultiLanguage([], 'all');
+        $newInstance->profanityDetector = new ProfanityDetector(
+            $newInstance->config->getProfanityExpressions(),
+            $newInstance->config->getFalsePositives()
+        );
+        
+        return $newInstance;
     }
 
     /**
@@ -109,6 +261,12 @@ class BlaspService extends BlaspExpressionService
 
         $this->cleanString = $string;
 
+        // Reset tracking variables
+        $this->hasProfanity = false;
+        $this->profanitiesCount = 0;
+        $this->uniqueProfanitiesFound = [];
+        $this->uniqueProfanitiesMap = [];
+
         $this->handle();
 
         return $this;
@@ -124,13 +282,16 @@ class BlaspService extends BlaspExpressionService
     {
         $continue = true;
 
-        $stringToNormalize = $this->cleanString;
-        $normalizedString = $this->stringNormalizer->normalize($stringToNormalize);
+        // Work with a copy of cleanString that we'll modify in sync with normalized string
+        $workingCleanString = $this->cleanString;
+        $normalizedString = $this->stringNormalizer->normalize($workingCleanString);
 
         // Loop through until no more profanities are detected
         while ($continue) {
             $continue = false;
             $normalizedString = preg_replace('/\s+/', ' ', $normalizedString);
+            $workingCleanString = preg_replace('/\s+/', ' ', $workingCleanString);
+            
             foreach ($this->profanityDetector->getProfanityExpressions() as $profanity => $expression) {
                 preg_match_all($expression, $normalizedString, $matches, PREG_OFFSET_CAPTURE);
 
@@ -138,7 +299,13 @@ class BlaspService extends BlaspExpressionService
                     foreach ($matches[0] as $match) {
                         // Get the start and length of the match
                         $start = $match[1];
-                        $length = strlen($match[0]);
+                        $length = mb_strlen($match[0], 'UTF-8');
+                        $matchedText = $match[0];
+
+                        // Check if the match inappropriately spans across word boundaries
+                        if ($this->isSpanningWordBoundary($matchedText)) {
+                            continue;  // Skip this match as it spans word boundaries
+                        }
 
                         // Use boundaries to extract the full word around the match
                         $fullWord = $this->getFullWordContext($normalizedString, $start, $length);
@@ -153,40 +320,67 @@ class BlaspService extends BlaspExpressionService
                         $this->hasProfanity = true;
 
                         // Replace the found profanity
-                        $this->generateProfanityReplacement((array) $match);
+                        $length = mb_strlen($match[0], 'UTF-8');
+                        $maskChar = $this->customMaskCharacter ?? config('blasp.mask_character', '*');
+                        $replacement = str_repeat($maskChar, $length);
+                        
+                        // Replace in working clean string
+                        $workingCleanString = mb_substr($workingCleanString, 0, $start) . $replacement .
+                            mb_substr($workingCleanString, $start + $length);
 
-                        $normalizedString = substr_replace($normalizedString, str_repeat('*', $length), $start, $length);
+                        // Replace in normalized string to keep tracking consistent  
+                        $normalizedString = mb_substr($normalizedString, 0, $start) . str_repeat($maskChar, mb_strlen($match[0], 'UTF-8')) .
+                            mb_substr($normalizedString, $start + mb_strlen($match[0], 'UTF-8'));
 
-                        // Avoid adding duplicates to the unique list
-                        if (!in_array($profanity, $this->uniqueProfanitiesFound)) {
+                        // Increment profanity count
+                        $this->profanitiesCount++;
+
+                        // Avoid adding duplicates to the unique list using hash map for O(1) lookup
+                        if (!isset($this->uniqueProfanitiesMap[$profanity])) {
                             $this->uniqueProfanitiesFound[] = $profanity;
+                            $this->uniqueProfanitiesMap[$profanity] = true;
                         }
                     }
                 }
             }
         }
 
+        // Update the final clean string
+        $this->cleanString = $workingCleanString;
+
         return $this;
     }
 
     /**
-     * Mask the profanities found in the incoming string.
-     *
-     * @param array $match
-     * @return void
+     * Check if a match inappropriately spans across word boundaries.
+     * 
+     * @param string $matchedText The text that was matched by the regex
+     * @return bool
      */
-    private function generateProfanityReplacement(array $match): void
+    private function isSpanningWordBoundary(string $matchedText): bool
     {
-        $start = $match[1]; // Starting position of the profanity
-        $length = mb_strlen($match[0], 'UTF-8'); // Length of the profanity
-        $replacement = str_repeat("*", $length); // Mask with asterisks
-
-        // Replace only the profanity in the cleanString, preserving the original case and spaces
-        $this->cleanString = mb_substr($this->cleanString, 0, $start) . $replacement .
-            mb_substr($this->cleanString, $start + $length);
-
-        // Increment profanity count
-        $this->profanitiesCount++;
+        // If the match contains spaces, it might be spanning word boundaries
+        if (preg_match('/\s+/', $matchedText)) {
+            // Split by spaces to check the word structure
+            $parts = preg_split('/\s+/', $matchedText);
+            
+            // If we have multiple parts and the last part is just a single character,
+            // it's likely the beginning of the next word
+            if (count($parts) > 1) {
+                $lastPart = end($parts);
+                if (strlen($lastPart) === 1 && preg_match('/[a-z]/i', $lastPart)) {
+                    return true;  // Last part is single char - likely from next word
+                }
+                
+                // Also check if first part is single char (less common but possible)
+                $firstPart = $parts[0];
+                if (strlen($firstPart) === 1 && preg_match('/[a-z]/i', $firstPart)) {
+                    return true;  // First part is single char - likely from previous word
+                }
+            }
+        }
+        
+        return false;
     }
 
     /**
