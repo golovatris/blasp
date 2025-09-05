@@ -6,7 +6,6 @@ use Illuminate\Support\ServiceProvider as BaseServiceProvider;
 use Blaspsoft\Blasp\Config\ConfigurationLoader;
 use Blaspsoft\Blasp\Contracts\ExpressionGeneratorInterface;
 use Blaspsoft\Blasp\Generators\ProfanityExpressionGenerator;
-use Blaspsoft\Blasp\Plugins\PluginManager;
 use Blaspsoft\Blasp\Registries\LanguageNormalizerRegistry;
 use Blaspsoft\Blasp\Registries\DetectionStrategyRegistry;
 
@@ -68,13 +67,6 @@ class ServiceProvider extends BaseServiceProvider
         $this->app->singleton(ConfigurationLoader::class, function ($app) {
             return new ConfigurationLoader(
                 $app->make(ExpressionGeneratorInterface::class)
-            );
-        });
-
-        // Register plugin manager with dependency injection
-        $this->app->singleton(PluginManager::class, function ($app) {
-            return new PluginManager(
-                $app->make(DetectionStrategyRegistry::class)
             );
         });
 

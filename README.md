@@ -21,7 +21,7 @@ Blasp is a powerful, extensible profanity filter package for Laravel that helps 
 - **⚡ High Performance**: Advanced caching with O(1) lookups and optimized algorithms
 - **🎯 Smart Detection**: Handles substitutions, separators, variations, and false positives
 - **🏗️ Modern Architecture**: Built on SOLID principles with dependency injection
-- **✅ Battle Tested**: 184 tests with 1000+ assertions ensuring reliability
+- **✅ Battle Tested**: 148 tests with 858 assertions ensuring reliability
 
 ## Installation
 

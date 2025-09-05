@@ -130,11 +130,14 @@ class BlaspService
      */
     public function configure(?array $profanities = null, ?array $falsePositives = null): self
     {
-        $blasp = new BlaspService($profanities, $falsePositives, $this->configurationLoader);
-        $blasp->chosenLanguage = $this->chosenLanguage;
-        $blasp->customMaskCharacter = $this->customMaskCharacter;
+        $newInstance = clone $this;
+        $newInstance->config = $newInstance->configurationLoader->load($profanities, $falsePositives, $newInstance->chosenLanguage);
+        $newInstance->profanityDetector = new ProfanityDetector(
+            $newInstance->config->getProfanityExpressions(),
+            $newInstance->config->getFalsePositives()
+        );
 
-        return $blasp;
+        return $newInstance;
     }
 
     /**
@@ -142,18 +145,23 @@ class BlaspService
      *
      * @param string $language
      * @return self
+     * @throws \InvalidArgumentException
      */
     public function language(string $language): self
     {
         $newInstance = clone $this;
         $newInstance->chosenLanguage = $language;
         
-        // Reload configuration for the new language
-        $newInstance->config = $newInstance->configurationLoader->load(null, null, $language);
-        $newInstance->profanityDetector = new ProfanityDetector(
-            $newInstance->config->getProfanityExpressions(),
-            $newInstance->config->getFalsePositives()
-        );
+        try {
+            // Reload configuration for the new language
+            $newInstance->config = $newInstance->configurationLoader->load(null, null, $language);
+            $newInstance->profanityDetector = new ProfanityDetector(
+                $newInstance->config->getProfanityExpressions(),
+                $newInstance->config->getFalsePositives()
+            );
+        } catch (\Exception $e) {
+            throw new \InvalidArgumentException("Failed to load language '{$language}': " . $e->getMessage());
+        }
         
         return $newInstance;
     }
@@ -203,9 +211,14 @@ class BlaspService
      *
      * @param string $character
      * @return self
+     * @throws \InvalidArgumentException
      */
     public function maskWith(string $character): self
     {
+        if (empty($character)) {
+            throw new \InvalidArgumentException('Mask character cannot be empty');
+        }
+        
         $newInstance = clone $this;
         $newInstance->customMaskCharacter = mb_substr($character, 0, 1); // Ensure single character
         return $newInstance;
@@ -316,7 +329,8 @@ class BlaspService
                             mb_substr($workingCleanString, $start + $length);
 
                         // Replace in normalized string to keep tracking consistent  
-                        $normalizedString = substr_replace($normalizedString, str_repeat($maskChar, strlen($match[0])), $start, strlen($match[0]));
+                        $normalizedString = mb_substr($normalizedString, 0, $start) . str_repeat($maskChar, mb_strlen($match[0], 'UTF-8')) .
+                            mb_substr($normalizedString, $start + mb_strlen($match[0], 'UTF-8'));
 
                         // Increment profanity count
                         $this->profanitiesCount++;

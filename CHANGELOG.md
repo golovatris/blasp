@@ -2,7 +2,7 @@
 
 All notable changes to `blasp` will be documented in this file
 
-## 3.0.0 - Unreleased
+## 3.0.0 - 2025-01-05
 
 ### Added
 - Custom mask character support with `maskWith()` method

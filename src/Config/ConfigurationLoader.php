@@ -2,6 +2,7 @@
 
 namespace Blaspsoft\Blasp\Config;
 
+use Illuminate\Support\Facades\Cache;
 use Blaspsoft\Blasp\Contracts\DetectionConfigInterface;
 use Blaspsoft\Blasp\Contracts\MultiLanguageConfigInterface;
 use Blaspsoft\Blasp\Contracts\ExpressionGeneratorInterface;
@@ -248,7 +249,7 @@ class ConfigurationLoader
     private function loadFromCacheOrGenerate(DetectionConfigInterface $config): DetectionConfigInterface
     {
         $cacheKey = $config->getCacheKey();
-        $cached = cache()->get($cacheKey);
+        $cached = Cache::get($cacheKey);
         
         if ($cached) {
             return $this->loadFromCache($cached);
@@ -316,7 +317,7 @@ class ConfigurationLoader
             $configToCache['default_language'] = $config->getCurrentLanguage();
         }
 
-        cache()->put($cacheKey, $configToCache, self::CACHE_TTL);
+        Cache::put($cacheKey, $configToCache, self::CACHE_TTL);
         $this->trackCacheKey($cacheKey);
     }
 
@@ -328,12 +329,11 @@ class ConfigurationLoader
      */
     private function trackCacheKey(string $cacheKey): void
     {
-        $cache = cache();
-        $keys = $cache->get('blasp_cache_keys', []);
+        $keys = Cache::get('blasp_cache_keys', []);
         
         if (!in_array($cacheKey, $keys)) {
             $keys[] = $cacheKey;
-            $cache->put('blasp_cache_keys', $keys, self::CACHE_TTL);
+            Cache::put('blasp_cache_keys', $keys, self::CACHE_TTL);
         }
     }
 
@@ -344,13 +344,11 @@ class ConfigurationLoader
      */
     public static function clearCache(): void
     {
-        $cache = cache();
-        
-        $keys = $cache->get('blasp_cache_keys', []);
+        $keys = Cache::get('blasp_cache_keys', []);
         foreach ($keys as $key) {
-            $cache->forget($key);
+            Cache::forget($key);
         }
         
-        $cache->forget('blasp_cache_keys');
+        Cache::forget('blasp_cache_keys');
     }
 }
