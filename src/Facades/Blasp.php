@@ -14,6 +14,7 @@ use Blaspsoft\Blasp\BlaspService;
  * @method static \Blaspsoft\Blasp\BlaspService german()
  * @method static \Blaspsoft\Blasp\BlaspService french()
  * @method static \Blaspsoft\Blasp\BlaspService allLanguages()
+ * @method static \Blaspsoft\Blasp\BlaspService maskWith(string $character)
  * 
  * @see \Blaspsoft\Blasp\BlaspService
  */
@@ -100,6 +101,17 @@ class Blasp extends Facade
     public static function allLanguages(): BlaspService
     {
         return static::getFacadeRoot()->allLanguages();
+    }
+
+    /**
+     * Set custom mask character for censoring profanities
+     *
+     * @param string $character
+     * @return \Blaspsoft\Blasp\BlaspService
+     */
+    public static function maskWith(string $character): BlaspService
+    {
+        return static::getFacadeRoot()->maskWith($character);
     }
 
     /**

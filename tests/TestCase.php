@@ -25,5 +25,6 @@ abstract class TestCase extends BaseTestCase
         Config::set('blasp.false_positives', config('blasp.false_positives', []));
         Config::set('blasp.languages', config('blasp.languages', []));
         Config::set('blasp.substitutions', config('blasp.substitutions', []));
+        Config::set('blasp.mask_character', '*'); // Default mask character
     }
 }

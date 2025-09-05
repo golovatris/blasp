@@ -89,6 +89,13 @@ class BlaspService
     private StringNormalizer $stringNormalizer;
 
     /**
+     * Custom mask character to use for censoring.
+     *
+     * @var string|null
+     */
+    protected ?string $customMaskCharacter = null;
+
+    /**
      * Initialise the class.
      *
      */
@@ -125,6 +132,7 @@ class BlaspService
     {
         $blasp = new BlaspService($profanities, $falsePositives, $this->configurationLoader);
         $blasp->chosenLanguage = $this->chosenLanguage;
+        $blasp->customMaskCharacter = $this->customMaskCharacter;
 
         return $blasp;
     }
@@ -188,6 +196,19 @@ class BlaspService
     public function french(): self
     {
         return $this->language('french');
+    }
+
+    /**
+     * Set custom mask character for censoring profanities
+     *
+     * @param string $character
+     * @return self
+     */
+    public function maskWith(string $character): self
+    {
+        $newInstance = clone $this;
+        $newInstance->customMaskCharacter = mb_substr($character, 0, 1); // Ensure single character
+        return $newInstance;
     }
 
     /**
@@ -287,14 +308,15 @@ class BlaspService
 
                         // Replace the found profanity
                         $length = mb_strlen($match[0], 'UTF-8');
-                        $replacement = str_repeat("*", $length);
+                        $maskChar = $this->customMaskCharacter ?? config('blasp.mask_character', '*');
+                        $replacement = str_repeat($maskChar, $length);
                         
                         // Replace in working clean string
                         $workingCleanString = mb_substr($workingCleanString, 0, $start) . $replacement .
                             mb_substr($workingCleanString, $start + $length);
 
                         // Replace in normalized string to keep tracking consistent  
-                        $normalizedString = substr_replace($normalizedString, str_repeat('*', strlen($match[0])), $start, strlen($match[0]));
+                        $normalizedString = substr_replace($normalizedString, str_repeat($maskChar, strlen($match[0])), $start, strlen($match[0]));
 
                         // Increment profanity count
                         $this->profanitiesCount++;
