@@ -17,6 +17,7 @@ Blasp is a powerful, extensible profanity filter package for Laravel that helps 
 - **🔗 Method Chaining**: Elegant fluent API with `Blasp::spanish()->check()`
 - **🌍 Multi-Language Support**: English, Spanish, German, and French with language-specific normalizers
 - **🌐 All Languages Mode**: Check against all languages simultaneously with `Blasp::allLanguages()`
+- **🎨 Custom Masking**: Configure custom mask characters with `maskWith()` method
 - **⚡ High Performance**: Advanced caching with O(1) lookups and optimized algorithms
 - **🎯 Smart Detection**: Handles substitutions, separators, variations, and false positives
 - **🏗️ Modern Architecture**: Built on SOLID principles with dependency injection
@@ -56,12 +57,19 @@ Blasp::spanish()->check($text);
 Blasp::german()->check($text);
 Blasp::french()->check($text);
 
-// Combine methods with chaining
-Blasp::spanish()->check($text);
+// Check against all languages
 Blasp::allLanguages()->check($text);
+
+// Custom mask character
+Blasp::maskWith('#')->check($text);
+Blasp::maskWith('●')->check($text);
 
 // Configure custom profanities
 Blasp::configure(['badword'], ['goodword'])->check($text);
+
+// Chain multiple methods together
+Blasp::spanish()->maskWith('*')->check($text);
+Blasp::allLanguages()->maskWith('-')->check($text);
 ```
 
 ### Working with Results
@@ -74,6 +82,10 @@ $result->getCleanString();            // "This is ******* awesome"
 $result->hasProfanity();             // true
 $result->getProfanitiesCount();      // 1
 $result->getUniqueProfanitiesFound(); // ['fucking']
+
+// With custom mask character
+$result = Blasp::maskWith('#')->check('This is fucking awesome');
+$result->getCleanString();            // "This is ####### awesome"
 ```
 
 ### Profanity Detection Types
@@ -113,6 +125,7 @@ Blasp uses configuration files to manage profanities, separators, and substituti
 // config/blasp.php
 return [
     'default_language' => 'english',  // Default language for detection
+    'mask_character' => '*',          // Default character for masking profanities
     'separators' => [...],            // Special characters used as separators
     'substitutions' => [...],         // Character substitutions (like @ for a)
     'false_positives' => [...],       // Words that should not be flagged
@@ -178,23 +191,52 @@ Blasp includes comprehensive support for multiple languages with automatic chara
 - **French**: Accent and cedilla normalization
 
 
-### Method Chaining API
-
-The new simplified API supports elegant method chaining:
+### Complete Chainable Methods Reference
 
 ```php
-// Chain multiple methods together
+// Language selection methods
+Blasp::language('spanish')     // Set any language by name
+Blasp::english()               // Shortcut for English
+Blasp::spanish()               // Shortcut for Spanish
+Blasp::german()                // Shortcut for German
+Blasp::french()                // Shortcut for French
+Blasp::allLanguages()          // Check against all languages
+
+// Configuration methods
+Blasp::configure($profanities, $falsePositives)  // Custom word lists
+Blasp::maskWith('#')                             // Custom mask character
+
+// Detection method
+Blasp::check($text)            // Analyze text for profanities
+
+// All methods return BlaspService for chaining
+$service = Blasp::spanish()                      // Returns BlaspService
+    ->maskWith('●')                              // Returns BlaspService
+    ->configure(['custom'], ['false_positive'])  // Returns BlaspService
+    ->check('texto para verificar');             // Returns BlaspService with results
+```
+
+### Advanced Method Chaining Examples
+
+```php
+// Example 1: Spanish with custom mask
 Blasp::spanish()
-    ->configure(['custom_bad_word'], ['false_positive'])
-    ->check('texto para verificar');
+    ->maskWith('#')
+    ->check('esto es una mierda');
+// Result: "esto es una ######"
 
-// All methods return a BlaspService instance for chaining
-$service = Blasp::english();          // Returns BlaspService
-$service = $service->check($text);    // Returns BlaspService with results
+// Example 2: All languages with custom configuration
+Blasp::allLanguages()
+    ->configure(['newbadword'], ['safephrase'])
+    ->maskWith('-')
+    ->check('multiple fuck merde languages');
+// Result: "multiple ---- ----- languages"
 
-// Mix and match as needed
-Blasp::allLanguages()->check($text);
-Blasp::french()->configure($profanities)->check($text);
+// Example 3: Dynamic language selection
+$language = $user->preferred_language; // 'french'
+Blasp::language($language)
+    ->maskWith($user->mask_preference ?? '*')
+    ->check($userContent);
 ```
 
 ### Laravel Integration
@@ -270,9 +312,62 @@ Blasp::allLanguages()->check($text);
 Blasp::german()->check($text);
 Blasp::french()->check($text);
 
+// NEW: Custom mask characters
+Blasp::maskWith('#')->check($text);
+Blasp::spanish()->maskWith('●')->check($text);
+
 // NEW: Default language configuration
 // Set in config/blasp.php: 'default_language' => 'spanish'
 Blasp::check($text); // Now uses Spanish by default
+```
+
+## 🎨 Custom Masking
+
+### Using Custom Mask Characters
+
+You can customize how profanities are masked using the `maskWith()` method:
+
+```php
+// Use hash symbols instead of asterisks
+$result = Blasp::maskWith('#')->check('This is fucking awesome');
+echo $result->getCleanString(); // "This is ####### awesome"
+
+// Use dots for masking
+$result = Blasp::maskWith('·')->check('What the hell');
+echo $result->getCleanString(); // "What the ····"
+
+// Unicode characters work too
+$result = Blasp::maskWith('●')->check('damn it');
+echo $result->getCleanString(); // "●●●● it"
+```
+
+### Setting Default Mask Character
+
+You can set a default mask character in the configuration:
+
+```php
+// config/blasp.php
+return [
+    'mask_character' => '#',  // All profanities will be masked with #
+    // ...
+];
+```
+
+### Combining with Other Methods
+
+The `maskWith()` method can be chained with other methods:
+
+```php
+// Spanish text with custom mask
+Blasp::spanish()->maskWith('@')->check('esto es mierda');
+
+// All languages with dots
+Blasp::allLanguages()->maskWith('·')->check('multilingual text');
+
+// Configure and mask
+Blasp::configure(['custom'], [])
+    ->maskWith('-')
+    ->check('custom text');
 ```
 
 ## 🏗️ Architecture
