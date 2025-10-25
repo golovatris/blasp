@@ -340,6 +340,16 @@ class BlaspService
                         // Use boundaries to extract the full word around the match
                         $fullWord = $this->getFullWordContext($normalizedString, $start, $length);
 
+                        // Special treatment for two-letter profanities. We skip it unless it's a full match as they cause extreme amount of false positives.
+                        if (mb_strlen($profanity) === 2 && $fullWord !== $profanity) {
+                            continue;
+                        }
+
+                        // To further reduce false positives we only accept matches that are at least of given percentage of the full word.
+                        if (mb_strlen($matchedText) / mb_strlen($fullWord) < config('blasp.false_positive_threshold', 0.5)) {
+                            continue;
+                        }
+
                         // Check if the full word (in lowercase) is in the false positives list
                         if ($this->profanityDetector->isFalsePositive($fullWord)) {
                             continue;  // Skip checking this word if it's a false positive
