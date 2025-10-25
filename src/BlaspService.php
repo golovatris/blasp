@@ -271,6 +271,10 @@ class BlaspService
 
         $this->cleanString = $string;
 
+        $this->hasProfanity = false;
+        $this->uniqueProfanitiesFound = [];
+        $this->profanitiesCount = 0;
+
         // Reset tracking variables
         $this->hasProfanity = false;
         $this->profanitiesCount = 0;
