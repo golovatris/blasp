@@ -428,17 +428,17 @@ class BlaspService
         $right = $start + $length;
 
         // Move the left pointer backwards to find the start of the full word
-        while ($left > 0 && preg_match('/\w/', $string[$left - 1])) {
+        while ($left > 0 && preg_match('/\w/u', mb_substr($string, $left - 1, 1))) {
             $left--;
         }
 
         // Move the right pointer forwards to find the end of the full word
-        while ($right < strlen($string) && preg_match('/\w/', $string[$right])) {
+        while ($right < strlen($string) && preg_match('/\w/u', mb_substr($string, $right, 1))) {
             $right++;
         }
 
         // Return the full word surrounding the matched profanity
-        return substr($string, $left, $right - $left);
+        return mb_substr($string, $left, $right - $left);
     }
 
 
