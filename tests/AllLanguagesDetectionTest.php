@@ -50,10 +50,10 @@ class AllLanguagesDetectionTest extends TestCase
             $this->assertArrayHasKey('profanities', $languageConfig, "No profanities array in $language config");
             
             // Create BlaspService with language-specific configuration
-            $blaspService = new BlaspService(
+            $blaspService = (new BlaspService(
                 $languageConfig['profanities'],
                 $languageConfig['false_positives'] ?? []
-            );
+            ))->language($language);
             
             // Test the detection
             $result = $blaspService->check($testCase['text']);

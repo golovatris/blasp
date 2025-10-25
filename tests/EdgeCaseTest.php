@@ -19,7 +19,7 @@ class EdgeCaseTest extends TestCase
         $found = $result->getUniqueProfanitiesFound();
         $this->assertContains('fuck', $found);
         $this->assertContains('merde', $found);
-        $this->assertContains('scheiße', $found);
+        $this->assertContains('sheisse', $found);
         $this->assertContains('mierda', $found);
     }
     

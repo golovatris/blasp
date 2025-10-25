@@ -209,7 +209,7 @@ class ConfigurationLoaderTest extends TestCase
         $mockGenerator = $this->createMock(ExpressionGeneratorInterface::class);
         $mockGenerator->expects($this->atLeastOnce())
                       ->method('generateExpressions')
-                      ->willReturn(['test' => '/test/i']);
+                      ->willReturn(['test' => '/test/iu']);
         
         $loader = new ConfigurationLoader($mockGenerator);
         $config = $loader->load(['test'], []);

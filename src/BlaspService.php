@@ -127,7 +127,7 @@ class BlaspService
         );
 
         $this->stringNormalizerRegistry = Normalize::getRegistry();
-        $this->stringNormalizer = $this->stringNormalizerRegistry->getDefault();
+        $this->stringNormalizer = $this->stringNormalizerRegistry->get($this->chosenLanguage);
     }
 
     /**
@@ -160,6 +160,7 @@ class BlaspService
     {
         $newInstance = clone $this;
         $newInstance->chosenLanguage = $language;
+        $newInstance->stringNormalizer = $newInstance->stringNormalizerRegistry->get($language);
         
         try {
             // Reload configuration for the new language
@@ -272,7 +273,6 @@ class BlaspService
     public function check(string $string): self
     {
         if (empty($string)) {
-
             throw new Exception('No string to check');
         }
 

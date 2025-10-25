@@ -65,7 +65,7 @@ class ProfanityExpressionGeneratorTest extends TestCase
         
         $this->assertIsString($result);
         $this->assertStringStartsWith('/', $result);
-        $this->assertStringEndsWith('/i', $result);
+        $this->assertStringEndsWith('/iu', $result);
     }
 
     public function test_generate_expressions_full_flow()
@@ -92,7 +92,7 @@ class ProfanityExpressionGeneratorTest extends TestCase
         foreach ($result as $profanity => $expression) {
             $this->assertIsString($expression);
             $this->assertStringStartsWith('/', $expression);
-            $this->assertStringEndsWith('/i', $expression);
+            $this->assertStringEndsWith('/iu', $expression);
             
             // Verify it's a valid regex by testing it doesn't throw error
             $testResult = @preg_match($expression, $profanity);
@@ -137,7 +137,7 @@ class ProfanityExpressionGeneratorTest extends TestCase
         $this->assertIsString($result);
         
         // Test that the generated separator expression works
-        $testExpression = '/f' . $result . 'u' . $result . 'c' . $result . 'k/i';
+        $testExpression = '/f' . $result . 'u' . $result . 'c' . $result . 'k/iu';
         
         // Should match separated versions
         $this->assertEquals(1, preg_match($testExpression, 'f-u-c-k'));
@@ -266,7 +266,7 @@ class ProfanityExpressionGeneratorTest extends TestCase
         $separatorExpression = $this->generator->generateSeparatorExpression($separators);
         
         // Create a test pattern with the separator
-        $testPattern = '/t' . $separatorExpression . 'e' . $separatorExpression . 's' . $separatorExpression . 't/i';
+        $testPattern = '/t' . $separatorExpression . 'e' . $separatorExpression . 's' . $separatorExpression . 't/iu';
         
         // Should match with various separators
         $this->assertEquals(1, preg_match($testPattern, 'test'));

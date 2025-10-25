@@ -5,6 +5,7 @@ return [
         // Common German profanities and vulgar expressions
         'scheiße',
         'scheisse',
+        'sheisse',
         'scheiß',
         'scheiss',
         'kacke',
