@@ -102,7 +102,7 @@ class ProfanityExpressionGenerator implements ExpressionGeneratorInterface
         $expression = str_replace(self::SEPARATOR_PLACEHOLDER, $separatorExpression, $expression);
 
         // Allow for non-word characters or spaces around the profanity
-        $expression = '/' . $expression . '/i';
+        $expression = '/' . $expression . '/iu';
         
         return $expression;
     }

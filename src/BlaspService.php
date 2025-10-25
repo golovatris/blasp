@@ -7,6 +7,7 @@ use Blaspsoft\Blasp\Normalizers\Normalize;
 use Blaspsoft\Blasp\Abstracts\StringNormalizer;
 use Blaspsoft\Blasp\Contracts\DetectionConfigInterface;
 use Blaspsoft\Blasp\Config\ConfigurationLoader;
+use Blaspsoft\Blasp\Registries\LanguageNormalizerRegistry;
 
 class BlaspService
 {
@@ -89,6 +90,13 @@ class BlaspService
     private StringNormalizer $stringNormalizer;
 
     /**
+     * Language normalizer registry instance.
+     *
+     * @var LanguageNormalizerRegistry
+     */
+    private LanguageNormalizerRegistry $stringNormalizerRegistry;
+
+    /**
      * Custom mask character to use for censoring.
      *
      * @var string|null
@@ -118,7 +126,8 @@ class BlaspService
             $this->config->getFalsePositives()
         );
 
-        $this->stringNormalizer = Normalize::getLanguageNormalizerInstance();
+        $this->stringNormalizerRegistry = Normalize::getRegistry();
+        $this->stringNormalizer = $this->stringNormalizerRegistry->getDefault();
     }
 
     /**
@@ -298,7 +307,14 @@ class BlaspService
 
         // Work with a copy of cleanString that we'll modify in sync with normalized string
         $workingCleanString = $this->cleanString;
-        $normalizedString = $this->stringNormalizer->normalize($workingCleanString);
+        if ($this->chosenLanguage !== 'all') {
+            $normalizedString = $this->stringNormalizer->normalize($workingCleanString);
+        } else {
+            $normalizedString = $workingCleanString;
+            foreach ($this->stringNormalizerRegistry->all() as $normalizer) {
+                $normalizedString = $normalizer->normalize($normalizedString);
+            }
+        }
 
         // Loop through until no more profanities are detected
         while ($continue) {
@@ -312,7 +328,7 @@ class BlaspService
                 if (!empty($matches[0])) {
                     foreach ($matches[0] as $match) {
                         // Get the start and length of the match
-                        $start = $match[1];
+                        $start = mb_strlen(substr($normalizedString, 0, $match[1]));
                         $length = mb_strlen($match[0], 'UTF-8');
                         $matchedText = $match[0];
 
