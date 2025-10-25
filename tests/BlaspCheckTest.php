@@ -111,7 +111,7 @@ class BlaspCheckTest extends TestCase
         $result =  $this->blaspService->check('This is a fuuckking sentence you fucking cunt!');
         $this->assertTrue($result->hasProfanity);
         $this->assertSame(3, $result->profanitiesCount);
-        $this->assertCount(2, $result->uniqueProfanitiesFound);
+        $this->assertCount(3, $result->uniqueProfanitiesFound);
         $this->assertSame('This is a ********* sentence you ******* ****!', $result->cleanString);
     }
 

@@ -367,8 +367,8 @@ class BlaspService
 
                         // Avoid adding duplicates to the unique list using hash map for O(1) lookup
                         if (!isset($this->uniqueProfanitiesMap[$profanity])) {
-                            $this->uniqueProfanitiesFound[] = $profanity;
-                            $this->uniqueProfanitiesMap[$profanity] = true;
+                            $this->uniqueProfanitiesFound[] = $matchedText;
+                            $this->uniqueProfanitiesMap[$matchedText] = true;
                         }
                     }
                 }
