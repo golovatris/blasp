@@ -68,6 +68,7 @@ class ConfigurationLoader
 
         $separators = config('blasp.separators');
         $substitutions = config('blasp.substitutions');
+        // $substitutions = isset($languageData) ? $languageData['substitutions'] : config('blasp.substitutions');
 
         $config = new DetectionConfig(
             $profanities,
@@ -248,14 +249,14 @@ class ConfigurationLoader
      */
     private function loadFromCacheOrGenerate(DetectionConfigInterface $config): DetectionConfigInterface
     {
-        $cacheKey = $config->getCacheKey();
-        $cached = Cache::get($cacheKey);
+        // $cacheKey = $config->getCacheKey();
+        // $cached = Cache::get($cacheKey);
         
-        if ($cached) {
-            return $this->loadFromCache($cached);
-        }
+        // if ($cached) {
+        //     return $this->loadFromCache($cached);
+        // }
 
-        $this->cacheConfiguration($config, $cacheKey);
+        // $this->cacheConfiguration($config, $cacheKey);
         return $config;
     }
 
