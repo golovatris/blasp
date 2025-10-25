@@ -28,6 +28,11 @@ class AllLanguagesApiTest extends TestCase
         $result = Blasp::allLanguages()->check('c\'est de la merde');
         $this->assertTrue($result->hasProfanity());
         $this->assertEquals('c\'est de la *****', $result->getCleanString());
+
+        // Test Russian profanity
+        $result = Blasp::allLanguages()->check('Ебать в пизду и жопу');
+        $this->assertTrue($result->hasProfanity());
+        $this->assertEquals('***** в ***** и ****', $result->getCleanString());
     }
 
     public function test_mixed_language_content()

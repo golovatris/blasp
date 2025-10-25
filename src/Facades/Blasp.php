@@ -13,6 +13,7 @@ use Blaspsoft\Blasp\BlaspService;
  * @method static \Blaspsoft\Blasp\BlaspService spanish()
  * @method static \Blaspsoft\Blasp\BlaspService german()
  * @method static \Blaspsoft\Blasp\BlaspService french()
+ * @method static \Blaspsoft\Blasp\BlaspService russian()
  * @method static \Blaspsoft\Blasp\BlaspService allLanguages()
  * @method static \Blaspsoft\Blasp\BlaspService maskWith(string $character)
  * 
@@ -91,6 +92,16 @@ class Blasp extends Facade
     public static function french(): BlaspService
     {
         return static::getFacadeRoot()->french();
+    }
+
+    /**
+     * Set Russian language (shortcut method)
+     *
+     * @return \Blaspsoft\Blasp\BlaspService
+     */
+    public static function russian(): BlaspService
+    {
+        return static::getFacadeRoot()->russian();
     }
 
     /**

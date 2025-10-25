@@ -35,5 +35,6 @@ class Normalize
         self::$registry->register('french', new \Blaspsoft\Blasp\Normalizers\FrenchStringNormalizer());
         self::$registry->register('spanish', new \Blaspsoft\Blasp\Normalizers\SpanishStringNormalizer());
         self::$registry->register('german', new \Blaspsoft\Blasp\Normalizers\GermanStringNormalizer());
+        self::$registry->register('russian', new \Blaspsoft\Blasp\Normalizers\RussianStringNormalizer());
     }
 }

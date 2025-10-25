@@ -7,7 +7,7 @@ All notable changes to `blasp` will be documented in this file
 ### Added
 - Custom mask character support with `maskWith()` method
 - Simplified API with Laravel facade pattern and method chaining
-- Comprehensive multi-language support (Spanish, German, French)
+- Comprehensive multi-language support (Spanish, German, French, Russian)
 - Expanded test coverage across all languages
 - Comprehensive extensibility system with full test coverage
 - Basic registry pattern for language normalizers

@@ -22,6 +22,7 @@ class MultiLanguageProfanityTest extends TestCase
             'spanish' => require __DIR__ . '/../config/languages/spanish.php',
             'german' => require __DIR__ . '/../config/languages/german.php',
             'french' => require __DIR__ . '/../config/languages/french.php',
+            'russian' => require __DIR__ . '/../config/languages/russian.php',
         ];
     }
 
@@ -153,6 +154,30 @@ class MultiLanguageProfanityTest extends TestCase
     }
 
     /**
+     * Test Russian profanities detection
+     */
+    public function test_russian_profanities()
+    {
+        $blaspService = new BlaspService(
+            $this->languageConfigs['russian']['profanities'],
+            $this->languageConfigs['russian']['false_positives'] ?? []
+        );
+
+        // Test common Russian profanities
+        $testCases = [
+            'ебать' => 'Это ебать',
+            'ебаться' => 'Это ебаться',
+            'пизда' => 'Это пизда',
+            'жопа' => 'Это жопа',
+        ];
+        
+        foreach ($testCases as $profanity => $text) {
+            $result = $blaspService->check($text);
+            $this->assertTrue($result->hasProfanity, "Failed to detect Russian: $profanity");
+        }
+    }
+
+    /**
      * Test profanities with variations (substitutions, doubling, obscuring)
      */
     public function test_profanity_variations()
@@ -187,6 +212,7 @@ class MultiLanguageProfanityTest extends TestCase
             'spanish' => ['MIERDA', 'MiErDa', 'mIeRdA'],
             'german' => ['SCHEISSE', 'ScHeIsSe', 'schEISSE'],
             'french' => ['MERDE', 'MeRdE', 'mErDe'],
+            'russian' => ['ЕБАНОЕ', 'Ебаное', 'ебаное', 'ЕБаНоЕ'],
         ];
         
         foreach ($testCases as $language => $variations) {

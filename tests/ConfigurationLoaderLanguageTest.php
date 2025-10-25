@@ -24,6 +24,7 @@ class ConfigurationLoaderLanguageTest extends TestCase
         $this->assertContains('spanish', $config->getAvailableLanguages());
         $this->assertContains('french', $config->getAvailableLanguages());
         $this->assertContains('german', $config->getAvailableLanguages());
+        $this->assertContains('russian', $config->getAvailableLanguages());
     }
 
     public function test_get_available_languages()
@@ -35,6 +36,7 @@ class ConfigurationLoaderLanguageTest extends TestCase
         $this->assertContains('spanish', $languages);
         $this->assertContains('french', $languages);
         $this->assertContains('german', $languages);
+        $this->assertContains('russian', $languages);
     }
 
     public function test_load_specific_language_english()
@@ -107,6 +109,30 @@ class ConfigurationLoaderLanguageTest extends TestCase
         $this->assertArrayHasKey('/à/', $frenchConfig['substitutions']);
         $this->assertArrayHasKey('/é/', $frenchConfig['substitutions']);
         $this->assertArrayHasKey('/ç/', $frenchConfig['substitutions']);
+    }
+
+    public function test_load_specific_language_russian()
+    {
+        $russianConfig = $this->loader->loadLanguage('russian');
+        
+        $this->assertIsArray($russianConfig);
+        $this->assertArrayHasKey('profanities', $russianConfig);
+        $this->assertArrayHasKey('false_positives', $russianConfig);
+        $this->assertArrayHasKey('substitutions', $russianConfig);
+        $this->assertIsArray($russianConfig['false_positives']);
+        $this->assertIsArray($russianConfig['substitutions']);
+        
+        // Test some known Russian profanities
+        $this->assertContains('ебать', $russianConfig['profanities']);
+        $this->assertContains('ебаться', $russianConfig['profanities']);
+
+        // Test some known Russian false positives
+        $this->assertContains('ёбанная', $russianConfig['false_positives']);
+        $this->assertContains('пизда', $russianConfig['false_positives']);
+
+        // Test Russian-specific substitutions
+        $this->assertArrayHasKey('/ё/', $russianConfig['substitutions']);
+        $this->assertArrayHasKey('/э/', $russianConfig['substitutions']);
     }
 
     public function test_load_specific_language_german()
@@ -187,6 +213,16 @@ class ConfigurationLoaderLanguageTest extends TestCase
         $frenchFalsePositives = $config->getFalsePositivesForLanguage('french');
         $this->assertContains('classe', $frenchFalsePositives);
         $this->assertContains('analyse', $frenchFalsePositives);
+
+        // Test getting Russian profanities specifically
+        $russianProfanities = $config->getProfanitiesForLanguage('russian');
+        $this->assertContains('ебать', $russianProfanities);
+        $this->assertContains('ебаться', $russianProfanities);
+
+        // Test getting Russian false positives specifically
+        $russianFalsePositives = $config->getFalsePositivesForLanguage('russian');
+        $this->assertContains('ёбанная', $russianFalsePositives);
+        $this->assertContains('пизда', $russianFalsePositives);
     }
 
     public function test_config_cache_key_generation()

@@ -31,6 +31,11 @@ class AllLanguagesDetectionTest extends TestCase
                 'text' => 'Eres un maldito hijo de puta',
                 'expected_profanities' => ['maldito', 'hijo de puta', 'puta'],
                 'min_count' => 2
+            ],
+            'russian' => [
+                'text' => 'Ты ёбанная пизда',
+                'expected_profanities' => ['ёбанная', 'пизда'],
+                'min_count' => 2
             ]
         ];
 
@@ -110,6 +115,10 @@ class AllLanguagesDetectionTest extends TestCase
             'english' => [
                 'fuck' => ['FUCK', 'Fuck', 'fuck', 'FuCk', 'f@ck', 'f*ck'],
                 'shit' => ['SHIT', 'Shit', 'shit', 'ShIt', 'sh1t', 'sh!t']
+            ],
+            'russian' => [
+                'ебаное' => ['ЕБАНОЕ', 'Ебаное', 'ебаное', 'ЕБаНоЕ'],
+                'говно' => ['ГОВНО', 'Говно', 'говно', 'ГоВнО']
             ]
         ];
         

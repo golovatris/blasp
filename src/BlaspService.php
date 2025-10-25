@@ -207,6 +207,16 @@ class BlaspService
     }
 
     /**
+     * Set Russian language (shortcut method)
+     *
+     * @return self
+     */
+    public function russian(): self
+    {
+        return $this->language('russian');
+    }
+
+    /**
      * Set custom mask character for censoring profanities
      *
      * @param string $character
