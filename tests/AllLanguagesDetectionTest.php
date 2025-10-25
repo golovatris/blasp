@@ -80,7 +80,7 @@ class AllLanguagesDetectionTest extends TestCase
             foreach ($testCase['expected_profanities'] as $profanity) {
                 $this->assertStringNotContainsString(
                     $profanity,
-                    strtolower($result->cleanString),
+                    mb_strtolower($result->cleanString),
                     "[$language] '$profanity' was not censored"
                 );
             }

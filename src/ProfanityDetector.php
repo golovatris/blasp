@@ -39,7 +39,7 @@ class ProfanityDetector
         $this->falsePositives = $falsePositives;
         
         // Pre-compute false positives hash map for faster lookups
-        $this->falsePositivesMap = array_flip(array_map('strtolower', $falsePositives));
+        $this->falsePositivesMap = array_flip(array_map('mb_strtolower', $falsePositives));
     }
 
     /**
@@ -70,6 +70,6 @@ class ProfanityDetector
     public function isFalsePositive(string $word): bool
     {
         // Use hash map for O(1) lookup instead of O(n) in_array
-        return isset($this->falsePositivesMap[strtolower($word)]);
+        return isset($this->falsePositivesMap[mb_strtolower($word)]);
     }
 }

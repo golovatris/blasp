@@ -25,7 +25,7 @@ abstract class BaseDetectionStrategy implements DetectionStrategyInterface
      */
     protected function isFalsePositive(string $word, array $falsePositives): bool
     {
-        return in_array(strtolower($word), $falsePositives, true);
+        return in_array(mb_strtolower($word), $falsePositives, true);
     }
 
     /**

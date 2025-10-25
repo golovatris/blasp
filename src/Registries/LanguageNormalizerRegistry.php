@@ -31,7 +31,7 @@ class LanguageNormalizerRegistry implements RegistryInterface
             throw new InvalidArgumentException('Item must be an instance of StringNormalizer');
         }
 
-        $this->normalizers[strtolower($key)] = $item;
+        $this->normalizers[mb_strtolower($key)] = $item;
     }
 
     /**
@@ -43,7 +43,7 @@ class LanguageNormalizerRegistry implements RegistryInterface
      */
     public function get(string $key): mixed
     {
-        $language = strtolower($key);
+        $language = mb_strtolower($key);
         
         if (!$this->has($language)) {
             throw new InvalidArgumentException("No normalizer registered for language: {$key}");
@@ -60,7 +60,7 @@ class LanguageNormalizerRegistry implements RegistryInterface
      */
     public function has(string $key): bool
     {
-        return isset($this->normalizers[strtolower($key)]);
+        return isset($this->normalizers[mb_strtolower($key)]);
     }
 
     /**
@@ -91,6 +91,6 @@ class LanguageNormalizerRegistry implements RegistryInterface
      */
     public function setDefaultLanguage(string $language): void
     {
-        $this->defaultLanguage = strtolower($language);
+        $this->defaultLanguage = mb_strtolower($language);
     }
 }

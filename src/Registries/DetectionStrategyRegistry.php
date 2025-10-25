@@ -26,7 +26,7 @@ class DetectionStrategyRegistry implements RegistryInterface
             throw new InvalidArgumentException('Item must be an instance of DetectionStrategyInterface');
         }
 
-        $this->strategies[strtolower($key)] = $item;
+        $this->strategies[mb_strtolower($key)] = $item;
     }
 
     /**
@@ -38,7 +38,7 @@ class DetectionStrategyRegistry implements RegistryInterface
      */
     public function get(string $key): mixed
     {
-        $strategyKey = strtolower($key);
+        $strategyKey = mb_strtolower($key);
         
         if (!$this->has($strategyKey)) {
             throw new InvalidArgumentException("No detection strategy registered with key: {$key}");
@@ -55,7 +55,7 @@ class DetectionStrategyRegistry implements RegistryInterface
      */
     public function has(string $key): bool
     {
-        return isset($this->strategies[strtolower($key)]);
+        return isset($this->strategies[mb_strtolower($key)]);
     }
 
     /**
@@ -112,6 +112,6 @@ class DetectionStrategyRegistry implements RegistryInterface
      */
     public function remove(string $key): void
     {
-        unset($this->strategies[strtolower($key)]);
+        unset($this->strategies[mb_strtolower($key)]);
     }
 }
