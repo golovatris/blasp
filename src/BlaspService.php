@@ -323,63 +323,61 @@ class BlaspService
             $workingCleanString = preg_replace('/\s+/', ' ', $workingCleanString);
             
             foreach ($this->profanityDetector->getProfanityExpressions() as $profanity => $expression) {
-                preg_match_all($expression, $normalizedString, $matches, PREG_OFFSET_CAPTURE);
+                while (preg_match($expression, $normalizedString, $match, PREG_OFFSET_CAPTURE)) {
+                    $match = $match[0];
 
-                if (!empty($matches[0])) {
-                    foreach ($matches[0] as $match) {
-                        // Get the start and length of the match
-                        $start = mb_strlen(substr($normalizedString, 0, $match[1]));
-                        $length = mb_strlen($match[0], 'UTF-8');
-                        $matchedText = $match[0];
+                    // Get the start and length of the match
+                    $start = mb_strlen(substr($normalizedString, 0, $match[1]));
+                    $length = mb_strlen($match[0], 'UTF-8');
+                    $matchedText = $match[0];
 
-                        // Check if the match inappropriately spans across word boundaries
-                        if ($this->isSpanningWordBoundary($matchedText)) {
-                            continue;  // Skip this match as it spans word boundaries
-                        }
+                    // Check if the match inappropriately spans across word boundaries
+                    if ($this->isSpanningWordBoundary($matchedText)) {
+                        continue;  // Skip this match as it spans word boundaries
+                    }
 
-                        // Use boundaries to extract the full word around the match
-                        $fullWord = $this->getFullWordContext($normalizedString, $start, $length);
+                    // Use boundaries to extract the full word around the match
+                    $fullWord = $this->getFullWordContext($normalizedString, $start, $length);
 
-                        // Special treatment for two-letter profanities. We skip it unless it's a full match as they cause extreme amount of false positives.
-                        if (mb_strlen($profanity) === 2 && $fullWord !== $profanity) {
-                            continue;
-                        }
+                    // Special treatment for two-letter profanities. We skip it unless it's a full match as they cause extreme amount of false positives.
+                    if (mb_strlen($profanity) === 2 && $fullWord !== $profanity) {
+                        continue;
+                    }
 
-                        // To further reduce false positives we only accept matches that are at least of given percentage of the full word.
-                        if ($fullWord !== '' && mb_strlen($matchedText) / mb_strlen($fullWord) < config('blasp.false_positive_threshold', 0.5)) {
-                            continue;
-                        }
+                    // To further reduce false positives we only accept matches that are at least of given percentage of the full word.
+                    if ($fullWord !== '' && mb_strlen($matchedText) / mb_strlen($fullWord) < config('blasp.false_positive_threshold', 0.5)) {
+                        continue;
+                    }
 
-                        // Check if the full word (in lowercase) is in the false positives list
-                        if ($this->profanityDetector->isFalsePositive($fullWord)) {
-                            continue;  // Skip checking this word if it's a false positive
-                        }
+                    // Check if the full word (in lowercase) is in the false positives list
+                    if ($this->profanityDetector->isFalsePositive($fullWord)) {
+                        continue;  // Skip checking this word if it's a false positive
+                    }
 
-                        $continue = true;  // Continue if we find any profanities
+                    $continue = true;  // Continue if we find any profanities
 
-                        $this->hasProfanity = true;
+                    $this->hasProfanity = true;
 
-                        // Replace the found profanity
-                        $length = mb_strlen($match[0], 'UTF-8');
-                        $maskChar = $this->customMaskCharacter ?? config('blasp.mask_character', '*');
-                        $replacement = str_repeat($maskChar, $length);
-                        
-                        // Replace in working clean string
-                        $workingCleanString = mb_substr($workingCleanString, 0, $start) . $replacement .
-                            mb_substr($workingCleanString, $start + $length);
+                    // Replace the found profanity
+                    $length = mb_strlen($match[0], 'UTF-8');
+                    $maskChar = $this->customMaskCharacter ?? config('blasp.mask_character', '*');
+                    $replacement = str_repeat($maskChar, $length);
+                    
+                    // Replace in working clean string
+                    $workingCleanString = mb_substr($workingCleanString, 0, $start) . $replacement .
+                        mb_substr($workingCleanString, $start + $length);
 
-                        // Replace in normalized string to keep tracking consistent  
-                        $normalizedString = mb_substr($normalizedString, 0, $start) . str_repeat($maskChar, mb_strlen($match[0], 'UTF-8')) .
-                            mb_substr($normalizedString, $start + mb_strlen($match[0], 'UTF-8'));
+                    // Replace in normalized string to keep tracking consistent  
+                    $normalizedString = mb_substr($normalizedString, 0, $start) . str_repeat($maskChar, mb_strlen($match[0], 'UTF-8')) .
+                        mb_substr($normalizedString, $start + mb_strlen($match[0], 'UTF-8'));
 
-                        // Increment profanity count
-                        $this->profanitiesCount++;
+                    // Increment profanity count
+                    $this->profanitiesCount++;
 
-                        // Avoid adding duplicates to the unique list using hash map for O(1) lookup
-                        if (!isset($this->uniqueProfanitiesMap[$profanity])) {
-                            $this->uniqueProfanitiesFound[] = $matchedText;
-                            $this->uniqueProfanitiesMap[$matchedText] = true;
-                        }
+                    // Avoid adding duplicates to the unique list using hash map for O(1) lookup
+                    if (!isset($this->uniqueProfanitiesMap[$profanity])) {
+                        $this->uniqueProfanitiesFound[] = $matchedText;
+                        $this->uniqueProfanitiesMap[$matchedText] = true;
                     }
                 }
             }
