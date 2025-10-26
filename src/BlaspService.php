@@ -349,7 +349,7 @@ class BlaspService
 
                         // To further reduce false positives we only accept matches that are at least of given percentage of the full word.
                         if (
-                            mb_strlen($profanity) < config('blasp.false_positive_threshold_character_limit', 5)
+                            mb_strlen($matchedText) < config('blasp.false_positive_threshold_character_limit', 5)
                             && $fullWord !== ''
                             && (mb_strlen($matchedText) / mb_strlen($fullWord)) < config('blasp.false_positive_threshold', 0.5)
                         ) {
