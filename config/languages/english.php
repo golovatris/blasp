@@ -1085,6 +1085,8 @@ return [
         'yellowman',
         'zigabo',
         'zipper head',
+        'incel',
+        'incels'
     ],
     
     'false_positives' => [
